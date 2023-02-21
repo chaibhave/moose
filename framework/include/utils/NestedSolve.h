@@ -340,12 +340,12 @@ NestedSolve::nonlinear(V & guess, T compute)
     // check convergence
     if (_n_iterations >= _min_iterations && is_converged())
       return;
-    std::cout <<_n_iterations << "\t";
-    for (unsigned int m = 0; m < guess.size(); ++m )
-      {
-        std::cout << guess[m] << "\t";
-      }
-    std::cout << normSquare(residual) << "\n"; 
+    // std::cout <<_n_iterations << "\t";
+    // for (unsigned int m = 0; m < guess.size(); ++m )
+    //   {
+    //     std::cout << guess[m] << "\t";
+    //   }
+    // std::cout << normSquare(residual) << "\n"; 
     // solve and apply next increment
     linear(jacobian, delta, residual);
     guess -= delta;

@@ -15,65 +15,71 @@ registerMooseObject("MooseApp", NestedSolveMaterial);
 InputParameters
 NestedSolveMaterial::validParams()
 {
-    InputParameters params = DerivativeMaterialInterface<Material>::validParams();
-    params.addClassDescription("Performs a nested newton solve on the residual equations provided. Solve can use standard Newton-Raphson or damped newton.");
+  InputParameters params = DerivativeMaterialInterface<Material>::validParams();
+  params.addClassDescription("Performs a nested newton solve on the residual equations provided. "
+                             "Solve can use standard Newton-Raphson or damped newton.");
 
-    params.addRequiredParam<std::vector<MaterialPropertyName>>(
-      "xi_names",
-      "Material properties to solve for.");
-    params.addRequiredParam<std::vector<Real>>("xi_IC",
+  params.addRequiredParam<std::vector<MaterialPropertyName>>("xi_names",
+                                                             "Material properties to solve for.");
+  params.addRequiredParam<std::vector<Real>>("xi_IC",
                                              "Initial values of xi in the same order as xi_names.");
 
-    params.addRequiredParam<std::vector<MaterialName>>("Ri","Residual function material properties for the variables. One function is required per variable.");
-    params.addParam<MaterialName>("condition","1","Material property that checks bounds and conditions on the material properties being solved for.");
-    params += NestedSolve::validParams();
-    return params;
+  params.addRequiredParam<std::vector<MaterialName>>(
+      "Ri",
+      "Residual function material properties for the variables. One function is required per "
+      "variable.");
+  params.addRequiredParam<MaterialName>("conditions",
+                                "Material property that checks bounds and conditions on the "
+                                "material properties being solved for.");
+  params += NestedSolve::validParams();
+  return params;
 }
 
 NestedSolveMaterial::NestedSolveMaterial(const InputParameters & parameters)
-: DerivativeMaterialInterface<Material>(parameters),
-_xi_names(getParam<std::vector<MaterialPropertyName>>("xi_names")),
-_num_x(_xi_names.size()),
-_prop_xi(_num_x),
-_xi_old(_num_x),
-_xi_IC(getParam<std::vector<Real>>("xi_IC")),
-_Ri_names(getParam<std::vector<MaterialName>>("Ri")),
-_prop_Ri(_num_x),
-_dRidxi(_num_x),
-_abs_tol(getParam<Real>("absolute_tolerance")),
-_rel_tol(getParam<Real>("relative_tolerance")),
-_nested_solve(NestedSolve(parameters))
+  : DerivativeMaterialInterface<Material>(parameters),
+    _xi_names(getParam<std::vector<MaterialPropertyName>>("xi_names")),
+    _num_x(_xi_names.size()),
+    _prop_xi(_num_x),
+    _xi_old(_num_x),
+    _xi_IC(getParam<std::vector<Real>>("xi_IC")),
+    _Ri_names(getParam<std::vector<MaterialName>>("Ri")),
+    _prop_Ri(_num_x),
+    _dRidxi(_num_x),
+    _condition_mat_prop(getParam<MaterialName>("conditions")),
+    // _condition(getMaterialProperty<Real>("conditions")),
+    _abs_tol(getParam<Real>("absolute_tolerance")),
+    _rel_tol(getParam<Real>("relative_tolerance")),
+    _nested_solve(NestedSolve(parameters))
 {
   // std::cout << _xi_IC[0] <<"\n";
-  if(!(_xi_names.size()==_Ri_names.size()) )
-    {
-      mooseError("Number of residuals must be equal to number of xi material properties");
-    }
-  //declare material property variables to solve for
+  if (!(_xi_names.size() == _Ri_names.size()))
+  {
+    mooseError("Number of residuals must be equal to number of xi material properties");
+  }
+  // declare material property variables to solve for
   for (unsigned int m = 0; m < _num_x; ++m)
   {
     _prop_xi[m] = &declareProperty<Real>(_xi_names[m]);
     _xi_old[m] = &getMaterialPropertyOld<Real>(_xi_names[m]);
   }
 
-  //Obtain residual expressions
+  // Obtain residual expressions
   for (unsigned int m = 0; m < _num_x; ++m)
   {
-    _prop_Ri[m] = &getMaterialPropertyByName<Real>(_Ri_names[m]);    
+    _prop_Ri[m] = &getMaterialPropertyByName<Real>(_Ri_names[m]);
   }
 
-  //Calculate derivatives of residual functions wrt _prop_xi
+  // Calculate derivatives of residual functions wrt _prop_xi
   for (unsigned int m = 0; m < _num_x; ++m)
   {
     _dRidxi[m].resize(_num_x);
     for (unsigned int n = 0; n < _num_x; ++n)
-      {
-        _dRidxi[m][n] = &getMaterialPropertyDerivative<Real>(_Ri_names[m], _xi_names[n]);
-      }
-
+    {
+      _dRidxi[m][n] = &getMaterialPropertyDerivative<Real>(_Ri_names[m], _xi_names[n]);
+    }
   }
 
-
+  //
 }
 
 void
@@ -89,15 +95,15 @@ NestedSolveMaterial::initialSetup()
   _Ri.resize(_num_x);
   for (unsigned int m = 0; m < _num_x; ++m)
   {
-   _Ri[m] = &getMaterialByName(_Ri_names[m]);
+    _Ri[m] = &getMaterialByName(_Ri_names[m]);
   }
 }
 
-void 
+void
 NestedSolveMaterial::computeQpProperties()
 {
-  // for (unsigned int m = 0; m < _num_x; ++m)
-  //   (*_prop_xi[m])[_qp] = _xi_IC[m];
+  for (unsigned int m = 0; m < _num_x; ++m)
+    (*_prop_xi[m])[_qp] = _xi_IC[m];
 
   // parameters for nested Newton iteration
   NestedSolve::Value<> solution(_num_x);
@@ -113,29 +119,32 @@ NestedSolveMaterial::computeQpProperties()
                      NestedSolve::Jacobian<> & jacobian)
   {
     for (unsigned int m = 0; m < _num_x; ++m)
-      {
-        (*_prop_xi[m])[_qp] = guess(m);
-      }
-      for (unsigned int m = 0; m < _num_x; ++m)
-      {
-        // _Ri[m] = &getMaterialByName(_Ri_names[m]);
-        _Ri[m]->computePropertiesAtQp(_qp);
-      }
+    {
+      (*_prop_xi[m])[_qp] = guess(m);
+      std::cout << guess(m) << "\t";
+    }
+    for (unsigned int m = 0; m < _num_x; ++m)
+    {
+      // _Ri[m] = &getMaterialByName(_Ri_names[m]);
+      _Ri[m]->computePropertiesAtQp(_qp);
+    }
 
-  
-      jacobian.setZero();
-      for (unsigned int m = 0; m < _num_x; ++m)
-      {
-        residual[m] = (*_prop_Ri[m])[_qp];
-        for (unsigned int n = 0; n < _num_x; ++n)
-          {
-            jacobian(m,n) = (*_dRidxi[m][n])[_qp];
-          }
-      }
+    jacobian.setZero();
+    for (unsigned int m = 0; m < _num_x; ++m)
+    {
+      residual[m] = (*_prop_Ri[m])[_qp];
+      // std::cout << residual[m] << "\t" << (*_prop_Ri[m])[_qp] << "\t";
 
+      for (unsigned int n = 0; n < _num_x; ++n)
+      {
+        jacobian(m, n) = (*_dRidxi[m][n])[_qp];
+        // std::cout << jacobian(m,n) << "\t";
+      }
+    }
+    std::cout << "\n";
   };
 
-  _nested_solve.nonlinear(solution,compute);
+  _nested_solve.nonlinear(solution, compute);
 
   // assign solution to ci
   for (unsigned int m = 0; m < _num_x; ++m)
@@ -143,5 +152,4 @@ NestedSolveMaterial::computeQpProperties()
 
   if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
     mooseException("Nested Newton iteration did not converge.");
-
- }
+}

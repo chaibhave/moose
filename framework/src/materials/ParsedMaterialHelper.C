@@ -22,6 +22,8 @@ ParsedMaterialHelper<is_ad>::validParams()
                         true,
                         "Throw an error if any explicitly requested material property does not "
                         "exist. Otherwise assume it to be zero.");
+  //Upstream materials
+  params.addParam<std::vector<MaterialName>>("upstream_materials",std::vector<MaterialName>(),"List of upstream material properties that must be evaluated when compute=false");
   return params;
 }
 
@@ -34,6 +36,7 @@ ParsedMaterialHelper<is_ad>::ParsedMaterialHelper(const InputParameters & parame
     _mat_prop_descriptors(0),
     _tol(0),
     _map_mode(map_mode),
+    _upstream_mat_names(this->template getParam<std::vector<MaterialName>>("upstream_materials")),
     _error_on_missing_material_properties(
         this->template getParam<bool>("error_on_missing_material_properties"))
 {
@@ -232,6 +235,17 @@ ParsedMaterialHelper<true>::functionsOptimize()
 
 template <bool is_ad>
 void
+ParsedMaterialHelper<is_ad>::initialSetup()
+{ 
+  _upstream_mat.resize(_upstream_mat_names.size());
+  for(unsigned int i=0;i<_upstream_mat_names.size();++i)
+    {
+      _upstream_mat[i] = & this -> getMaterialByName(_upstream_mat_names[i]);
+    }
+}
+
+template <bool is_ad>
+void
 ParsedMaterialHelper<is_ad>::initQpStatefulProperties()
 {
   computeQpProperties();
@@ -241,6 +255,15 @@ template <bool is_ad>
 void
 ParsedMaterialHelper<is_ad>::computeQpProperties()
 {
+  // std::cout << "Size of dependent mat props = " <<_upstream_mat_names.size() << "\n";
+  if (!(this->_compute))
+  {
+    for(unsigned int i=0;i<_upstream_mat_names.size();++i)
+    {
+      _upstream_mat[i]->computePropertiesAtQp(_qp);
+    }
+  }
+  
   // fill the parameter vector, apply tolerances
   for (unsigned int i = 0; i < _nargs; ++i)
   {
