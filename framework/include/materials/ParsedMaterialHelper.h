@@ -51,6 +51,7 @@ public:
 
   static InputParameters validParams();
 
+
   void functionParse(const std::string & function_expression);
   void functionParse(const std::string & function_expression,
                      const std::vector<std::string> & constant_names,
@@ -75,7 +76,7 @@ protected:
 
   void initQpStatefulProperties() override;
   void computeQpProperties() override;
-
+  void initialSetup() override final;
   // tasks to perform after parsing the primary function
   virtual void functionsPostParse();
 
@@ -111,9 +112,12 @@ protected:
    * FParser parameter name when parsing the FParser expression.
    */
   const VariableNameMappingMode _map_mode;
-
+  // //upstream materials
+  std::vector<MaterialName> _upstream_mat_names;
   /// This is true by default, but can be disabled to make non-existing properties default to zero
   const bool _error_on_missing_material_properties;
+
+  std::vector<MaterialBase *> _upstream_mat;
 };
 
 template <>

@@ -76,4 +76,5 @@ ParsedMaterialBase::ParsedMaterialBase(const InputParameters & parameters)
   // get tolerance vectors
   _tol_names = parameters.get<std::vector<std::string>>("tol_names");
   _tol_values = parameters.get<std::vector<Real>>("tol_values");
+
 }

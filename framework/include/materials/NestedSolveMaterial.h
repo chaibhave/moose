@@ -42,7 +42,8 @@ public:
   std::vector<std::vector<const MaterialProperty<Real> *>> _dRidxi;  
 
   // //conditions for damped solve
-  // const MaterialName _conditions;
+  const MaterialPropertyName _condition_mat_prop;
+  // const MaterialProperty<Real> & _condition;
 
   /// Absolute and relative tolerance of nested Newton iteration
   const Real _abs_tol;

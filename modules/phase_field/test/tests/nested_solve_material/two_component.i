@@ -5,11 +5,11 @@
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = 1 #15
+  nx = 15
   ny = 15
   nz = 0
   xmin = 0
-  xmax = 1 #10
+  xmax = 10
   ymin = -2.5
   ymax = 2.5
   zmin = 0
@@ -110,15 +110,17 @@
     property_name = 'equipot_ni'
     material_property_names = 'f_metal x_ni_m x_cr_m f_melt x_ni_s x_cr_s mu_ni_m:=D[f_metal,x_ni_m] mu_ni_s:=D[f_melt,x_ni_s]'
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
-    expression = 'mu_ni_m-mu_ni_s'
+    expression = '(mu_ni_m-mu_ni_s)'
+    upstream_materials = 'f_metal f_melt'
     compute = false
   []
   [equipot_cr]
     type = DerivativeParsedMaterial
-    material_property_names = 'f_metal x_ni_m x_cr_m f_melt x_ni_s x_cr_s mu_cr_m:=D[f_metal,x_cr_m] mu_cr_s:=D[f_melt,x_cr_s]'
+    material_property_names = 'f_metal x_ni_m x_cr_m mu_cr_m:=D[f_metal,x_cr_m] f_melt x_ni_s x_cr_s  mu_cr_s:=D[f_melt,x_cr_s]'
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     property_name = 'equipot_cr'
-    expression = 'mu_cr_m-mu_cr_s'
+    upstream_materials = 'f_metal f_melt'
+    expression = '(mu_cr_m-mu_cr_s)'
     compute = false
   []
   [ni_global_conc]
@@ -140,6 +142,36 @@
     compute = false
   []
   # Compute phase concentrations
+  # [NestedNewtonSolve]
+  #   type = NestedSolveMaterial
+  #   xi_names = 'x_ni_m x_cr_m'
+  #   Ri = 'equipot_ni equipot_cr'
+  #   xi_IC = '0.5 0.5'
+  #   outputs = exodus
+  #   output_properties = 'x_ni_m x_cr_m' # x_ni_s x_cr_s'
+  #   absolute_tolerance = 1e-12
+  #   relative_tolerance = 1e-8
+  #   min_iterations = 1
+  #   max_iterations = 10
+  # []
+  # [NestedNewtonSolve]
+  #   type = NestedSolveMaterial
+  #   xi_names = 'x_ni_s x_cr_s'
+  #   Ri = 'equipot_ni equipot_cr'
+  #   xi_IC = '0.5 0.5'
+  #   outputs = exodus
+  #   output_properties = 'x_ni_s x_cr_s' # x_ni_s x_cr_s'
+  #   absolute_tolerance = 1e-12
+  #   relative_tolerance = 1e-8
+  #   min_iterations = 1
+  #   max_iterations = 10
+  # []
+  # [C]
+  #   type = GenericConstantMaterial
+  #   prop_names = 'C'
+  #   prop_values = '1.0'
+  # []
+
   [NestedNewtonSolve]
     type = NestedSolveMaterial
     xi_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
@@ -151,6 +183,7 @@
     relative_tolerance = 1e-8
     min_iterations = 1
     max_iterations = 5
+    conditions = C
   []
 
   
@@ -159,6 +192,8 @@
     type = SwitchingFunctionMaterial
     h_order = HIGH
     eta = eta
+    outputs = exodus
+    output_properties = 'h'
   []
   # [h_eta]
   #   type = DerivativeParsedMaterial
