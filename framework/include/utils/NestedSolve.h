@@ -345,9 +345,15 @@ NestedSolve::nonlinear(V & guess, T compute)
     //   {
     //     std::cout << guess[m] << "\t";
     //   }
-    // std::cout << normSquare(residual) << "\n"; 
+    std::cout << "Residual square = " << normSquare(residual) << "\n"; 
     // solve and apply next increment
     linear(jacobian, delta, residual);
+
+    for (unsigned int i=0; i < delta.size();++i)
+      {
+        std::cout << delta(i) << "\t";
+      }
+
     guess -= delta;
     _n_iterations++;
 

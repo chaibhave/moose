@@ -28,9 +28,6 @@ NestedSolveMaterial::validParams()
       "Ri",
       "Residual function material properties for the variables. One function is required per "
       "variable.");
-  params.addRequiredParam<MaterialName>("conditions",
-                                "Material property that checks bounds and conditions on the "
-                                "material properties being solved for.");
   params += NestedSolve::validParams();
   return params;
 }
@@ -45,8 +42,6 @@ NestedSolveMaterial::NestedSolveMaterial(const InputParameters & parameters)
     _Ri_names(getParam<std::vector<MaterialName>>("Ri")),
     _prop_Ri(_num_x),
     _dRidxi(_num_x),
-    _condition_mat_prop(getParam<MaterialName>("conditions")),
-    // _condition(getMaterialProperty<Real>("conditions")),
     _abs_tol(getParam<Real>("absolute_tolerance")),
     _rel_tol(getParam<Real>("relative_tolerance")),
     _nested_solve(NestedSolve(parameters))
@@ -118,14 +113,9 @@ NestedSolveMaterial::computeQpProperties()
                      NestedSolve::Value<> & residual,
                      NestedSolve::Jacobian<> & jacobian)
   {
+    update_guess(guess);
     for (unsigned int m = 0; m < _num_x; ++m)
     {
-      (*_prop_xi[m])[_qp] = guess(m);
-      std::cout << guess(m) << "\t";
-    }
-    for (unsigned int m = 0; m < _num_x; ++m)
-    {
-      // _Ri[m] = &getMaterialByName(_Ri_names[m]);
       _Ri[m]->computePropertiesAtQp(_qp);
     }
 
@@ -133,15 +123,11 @@ NestedSolveMaterial::computeQpProperties()
     for (unsigned int m = 0; m < _num_x; ++m)
     {
       residual[m] = (*_prop_Ri[m])[_qp];
-      // std::cout << residual[m] << "\t" << (*_prop_Ri[m])[_qp] << "\t";
-
       for (unsigned int n = 0; n < _num_x; ++n)
       {
         jacobian(m, n) = (*_dRidxi[m][n])[_qp];
-        // std::cout << jacobian(m,n) << "\t";
       }
     }
-    std::cout << "\n";
   };
 
   _nested_solve.nonlinear(solution, compute);
@@ -152,4 +138,15 @@ NestedSolveMaterial::computeQpProperties()
 
   if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
     mooseException("Nested Newton iteration did not converge.");
+}
+
+void
+NestedSolveMaterial::update_guess(const NestedSolve::Value<> & guess)
+{
+  for (unsigned int m = 0; m < _num_x; ++m)
+  {
+    (*_prop_xi[m])[_qp] = guess(m);
+    std::cout << guess(m) << "\t";
+  }
+  std::cout << "\n";
 }

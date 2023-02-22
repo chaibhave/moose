@@ -18,12 +18,15 @@ public:
   static InputParameters validParams();
 
   NestedSolveMaterial(const InputParameters & parameters);
+  /// @brief Overrideable function to make the input material properties change according to nested solver's guess.
+  virtual void update_guess(const NestedSolve::Value<> &guess);
+
 
   protected:
   virtual void initQpStatefulProperties() override;
   virtual void initialSetup() override;
   virtual void computeQpProperties() override;
-
+  
 
   //Material property input variables
   const std::vector<MaterialPropertyName> _xi_names;

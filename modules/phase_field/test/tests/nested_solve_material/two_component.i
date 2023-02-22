@@ -87,7 +87,7 @@
   [f_metal]
     type = DerivativeParsedMaterial
     property_name = f_metal
-    expression = '(x_cr_m-0.2)^2 + (x_ni_m-0.8)^2'
+    expression = '96500*(x_cr_m-0.2)^2 + 96500*(x_ni_m-0.8)^2'
     # expression = '8090.0085*x_cr_m*log(x_cr_m) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*log(x_ni_m) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*log(-x_cr_m - x_ni_m + 1) + 123820.210087488'
     # expression = 'x_cr_m*x_ni_m*(10523.5652 - 27907.1252*x_ni_m) + 8090.0085*x_cr_m*log(x_cr_m) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*log(x_ni_m) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*log(-x_cr_m - x_ni_m + 1) + 8090.0085*(5.64178064301999e-79*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^25 + 2.04326786303716e-48*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^15 + 4.89513034938089e-17*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^5)*log(-1.91*x_cr_m*x_ni_m - 2.46*x_cr_m + 0.528*x_ni_m + 1) + 123820.210087488'
     material_property_names = 'x_cr_m x_ni_m'
@@ -110,7 +110,7 @@
     property_name = 'equipot_ni'
     material_property_names = 'f_metal x_ni_m x_cr_m f_melt x_ni_s x_cr_s mu_ni_m:=D[f_metal,x_ni_m] mu_ni_s:=D[f_melt,x_ni_s]'
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
-    expression = '(mu_ni_m-mu_ni_s)'
+    expression = mu_ni_m #'(mu_ni_m-mu_ni_s)'
     upstream_materials = 'f_metal f_melt'
     compute = false
   []
@@ -120,7 +120,7 @@
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     property_name = 'equipot_cr'
     upstream_materials = 'f_metal f_melt'
-    expression = '(mu_cr_m-mu_cr_s)'
+    expression = mu_cr_m #'(mu_cr_m-mu_cr_s)'
     compute = false
   []
   [ni_global_conc]
@@ -141,51 +141,61 @@
     expression = 'c_Cr - (h*x_cr_m + (1-h)*x_cr_s)'
     compute = false
   []
-  # Compute phase concentrations
+
+  [C]
+    type = ParsedMaterial
+    material_property_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    expression = '(x_ni_m>0)&(x_cr_m>0)&(x_ni_m+x_cr_m<1)' #&(x_ni_s>0)&(x_cr_s>0)
+    property_name = 'C'
+    compute = false
+  []
+
   # [NestedNewtonSolve]
   #   type = NestedSolveMaterial
-  #   xi_names = 'x_ni_m x_cr_m'
-  #   Ri = 'equipot_ni equipot_cr'
-  #   xi_IC = '0.5 0.5'
+  #   xi_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+  #   Ri = 'ni_global_conc cr_global_conc equipot_ni equipot_cr'
+  #   xi_IC = '0.33 0.33 0.33 0.33'
   #   outputs = exodus
-  #   output_properties = 'x_ni_m x_cr_m' # x_ni_s x_cr_s'
+  #   output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
   #   absolute_tolerance = 1e-12
   #   relative_tolerance = 1e-8
   #   min_iterations = 1
-  #   max_iterations = 10
-  # []
-  # [NestedNewtonSolve]
-  #   type = NestedSolveMaterial
-  #   xi_names = 'x_ni_s x_cr_s'
-  #   Ri = 'equipot_ni equipot_cr'
-  #   xi_IC = '0.5 0.5'
-  #   outputs = exodus
-  #   output_properties = 'x_ni_s x_cr_s' # x_ni_s x_cr_s'
-  #   absolute_tolerance = 1e-12
-  #   relative_tolerance = 1e-8
-  #   min_iterations = 1
-  #   max_iterations = 10
-  # []
-  # [C]
-  #   type = GenericConstantMaterial
-  #   prop_names = 'C'
-  #   prop_values = '1.0'
+  #   max_iterations = 5
   # []
 
-  [NestedNewtonSolve]
-    type = NestedSolveMaterial
-    xi_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
-    Ri = 'ni_global_conc cr_global_conc equipot_ni equipot_cr'
-    xi_IC = '0.33 0.33 0.33 0.33'
+  # [TestDampedNewtonSolve]
+  #   type = DampedNestedSolveMaterial
+
+  #   xi_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+  #   Ri = 'ni_global_conc cr_global_conc equipot_ni equipot_cr'
+  #   xi_IC = '0.8 0.19 0.33 0.33'
+  #   outputs = exodus
+  #   output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+  #   absolute_tolerance = 1e-8 #1e-12
+  #   relative_tolerance = 1e-8
+  #   min_iterations = 1
+  #   max_iterations = 50
+  #   damping_factor = 0.6
+  #   damping_algorithm = BOUNDED_DAMP
+  #   conditions = C
+  # []
+  [TestDampedNewtonSolve]
+    type = DampedNestedSolveMaterial
+
+    xi_names = 'x_ni_m x_cr_m'
+    Ri = 'equipot_ni equipot_cr'
+    xi_IC = '0.8 0.19'
     outputs = exodus
-    output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    output_properties = 'x_ni_m x_cr_m'
     absolute_tolerance = 1e-12
     relative_tolerance = 1e-8
     min_iterations = 1
-    max_iterations = 5
+    max_iterations = 50
+    damping_factor = 0.6
+    damping_algorithm = BOUNDED_DAMP
     conditions = C
+    max_damping_iters = 50
   []
-
   
   # h(eta)
   [h_eta]
@@ -211,7 +221,7 @@
   [constants]
     type = GenericConstantMaterial
     prop_names = 'M   L   kappa'
-    prop_values = '0.7 0.7 0.4  '
+    prop_values = '0.7 0.7 0.4'
   []
 []
 [Kernels]
@@ -248,7 +258,7 @@
   # petsc_options_value = ' asm    lu          nonzero                    nonzero'
   l_max_its = 100
   nl_max_its = 100
-  num_steps = 3
+  num_steps = 1
   dt = 0.1
 []
 #
