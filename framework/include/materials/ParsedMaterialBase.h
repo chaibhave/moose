@@ -33,6 +33,4 @@ protected:
   /// tolerance vectors
   std::vector<std::string> _tol_names;
   std::vector<Real> _tol_values;
-
-
 };
