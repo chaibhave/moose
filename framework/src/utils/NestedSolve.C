@@ -30,6 +30,8 @@ NestedSolve::validParams()
   params.addParam<unsigned int>("max_iterations",
                                 NestedSolve::maxIterationsDefault(),
                                 "Maximum number of non linear iterations");
+  params.addParam<Real>(
+      "delta_X_threshold", 1e-30, "Threshold for minimum step size for linear iterations");
   return params;
 }
 
@@ -39,7 +41,8 @@ NestedSolve::NestedSolve()
     _min_iterations(minIterationsDefault()),
     _max_iterations(maxIterationsDefault()),
     _state(State::NONE),
-    _n_iterations(0)
+    _n_iterations(0),
+    _delta_thresh(1e-30)
 {
 }
 
@@ -49,7 +52,8 @@ NestedSolve::NestedSolve(const InputParameters & params)
     _min_iterations(params.get<unsigned int>("min_iterations")),
     _max_iterations(params.get<unsigned int>("max_iterations")),
     _state(State::NONE),
-    _n_iterations(0)
+    _n_iterations(0),
+    _delta_thresh(params.get<Real>("delta_X_threshold"))
 {
 }
 
@@ -66,6 +70,7 @@ NestedSolve::sizeItems(const NestedSolve::DynamicVector & guess,
 void
 NestedSolve::linear(RankTwoTensor A, RealVectorValue & x, RealVectorValue b) const
 {
+  std::cout << "Linear iteration goes to A.inverse()*b \n";
   x = A.inverse() * b;
 }
 

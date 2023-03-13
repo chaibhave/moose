@@ -20,8 +20,8 @@ public:
 
 protected:
   virtual void initialSetup() override;
-  virtual void update_guess(const NestedSolve::Value<> &guess) override;
-  virtual void get_damped_guess(const NestedSolve::Value<> & guess,Real & _alpha);
+  virtual Real update_guess(const NestedSolve::Value<> & guess) override;
+  virtual void get_damped_guess(const NestedSolve::Value<> & guess, Real & _alpha);
 
   // MooseEnum _damping_algorithm;
   enum class DampAlgoEnum
