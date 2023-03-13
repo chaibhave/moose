@@ -97,6 +97,9 @@ protected:
   /// number of nested iterations
   std::size_t _n_iterations;
 
+  // Threshold for minimum step size of linear iterations
+  Real _delta_thresh;
+
   ///@{ Deduce the Jacobian type from the solution type
   template <typename T>
   struct CorrespondingJacobianTempl;
@@ -133,7 +136,7 @@ protected:
   void linear(const J & A, V & x, const V & b) const
   {
     // we could make the linear solve method configurable here
-    x = A.colPivHouseholderQr().solve(b);
+    x = A.householderQr().solve(b);
   }
 
   void linear(Real A, Real & x, Real b) const { x = b / A; }
@@ -340,28 +343,38 @@ NestedSolve::nonlinear(V & guess, T compute)
     // check convergence
     if (_n_iterations >= _min_iterations && is_converged())
       return;
-    // std::cout <<_n_iterations << "\t";
-    // for (unsigned int m = 0; m < guess.size(); ++m )
-    //   {
-    //     std::cout << guess[m] << "\t";
-    //   }
-    std::cout << "Residual square = " << normSquare(residual) << "\n"; 
+
     // solve and apply next increment
     linear(jacobian, delta, residual);
 
-    for (unsigned int i=0; i < delta.size();++i)
-      {
-        std::cout << delta(i) << "\t";
-      }
+    auto max_delta_idx = delta.cwiseAbs().maxCoeff();
+
+    if (max_delta_idx <= _delta_thresh)
+    {
+      // std::cout << "Minimum delta X threshold reached \n";
+      _state = State::CONVERGED_REL;
+      return;
+    }
+
+    // std::cout << "Delta x inside nested solve = \n";
+    // for (unsigned int i = 0; i < delta.size(); ++i)
+    // {
+    //   std::cout << delta(i) << "\t";
+    //   // std::cout << "\n";
+    // }
+    // std::cout << "\n";
 
     guess -= delta;
     _n_iterations++;
 
     // compute residual and jacobian for the next iteration
-    compute(guess, residual, jacobian);
+    Real _alpha = compute(guess, residual, jacobian);
+
+    // Dampen output if requested
+    guess += (1 - _alpha) * delta;
+
     r_square = normSquare(residual);
-
-
+    // std::cout << "\nAlpha = "<<_alpha<<", Residual square = " << r_square << "\n";
   }
 
   // if we exceed the max iterations, we could still be converged

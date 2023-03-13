@@ -10,6 +10,7 @@
 #include "ParsedMaterialHelper.h"
 
 #include "libmesh/quadrature.h"
+#include "Conversion.h"
 
 template <bool is_ad>
 InputParameters
@@ -280,6 +281,18 @@ ParsedMaterialHelper<is_ad>::computeQpProperties()
   auto nmat_props = _mat_prop_descriptors.size();
   for (MooseIndex(_mat_prop_descriptors) i = 0; i < nmat_props; ++i)
     _func_params[i + _nargs] = _mat_prop_descriptors[i].value()[_qp];
+
+  // if (name() == "C")
+  //   {
+  //     std::cout << "Condition material " << name() << "input material properties = ";
+  //     for (const auto f : _func_params)
+        
+  //       {
+  //         std::cout.precision(17);
+  //         std::cout << f << "\t";
+  //       }
+  //       std::cout << "\n";
+  //   }
 
   // insert material property values
   auto npps = _postprocessor_values.size();

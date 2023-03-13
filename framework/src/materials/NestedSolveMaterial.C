@@ -46,7 +46,6 @@ NestedSolveMaterial::NestedSolveMaterial(const InputParameters & parameters)
     _rel_tol(getParam<Real>("relative_tolerance")),
     _nested_solve(NestedSolve(parameters))
 {
-  // std::cout << _xi_IC[0] <<"\n";
   if (!(_xi_names.size() == _Ri_names.size()))
   {
     mooseError("Number of residuals must be equal to number of xi material properties");
@@ -73,8 +72,6 @@ NestedSolveMaterial::NestedSolveMaterial(const InputParameters & parameters)
       _dRidxi[m][n] = &getMaterialPropertyDerivative<Real>(_Ri_names[m], _xi_names[n]);
     }
   }
-
-  //
 }
 
 void
@@ -109,11 +106,11 @@ NestedSolveMaterial::computeQpProperties()
   _nested_solve.setAbsoluteTolerance(_abs_tol);
   _nested_solve.setRelativeTolerance(_rel_tol);
 
-  auto compute = [&](const NestedSolve::Value<> & guess,
+  auto compute = [&](NestedSolve::Value<> & guess,
                      NestedSolve::Value<> & residual,
                      NestedSolve::Jacobian<> & jacobian)
   {
-    update_guess(guess);
+    Real _alpha = update_guess(guess);
     for (unsigned int m = 0; m < _num_x; ++m)
     {
       _Ri[m]->computePropertiesAtQp(_qp);
@@ -128,6 +125,7 @@ NestedSolveMaterial::computeQpProperties()
         jacobian(m, n) = (*_dRidxi[m][n])[_qp];
       }
     }
+    return _alpha;
   };
 
   _nested_solve.nonlinear(solution, compute);
@@ -136,17 +134,22 @@ NestedSolveMaterial::computeQpProperties()
   for (unsigned int m = 0; m < _num_x; ++m)
     (*_prop_xi[m])[_qp] = solution[m];
 
+  for (unsigned int m = 0; m < _num_x; ++m)
+  {
+    _Ri[m]->computePropertiesAtQp(_qp);
+  }
+
   if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
     mooseException("Nested Newton iteration did not converge.");
 }
 
-void
+Real
 NestedSolveMaterial::update_guess(const NestedSolve::Value<> & guess)
 {
   for (unsigned int m = 0; m < _num_x; ++m)
   {
     (*_prop_xi[m])[_qp] = guess(m);
-    std::cout << guess(m) << "\t";
   }
-  std::cout << "\n";
+  // Output is unscaled
+  return 1.0;
 }
