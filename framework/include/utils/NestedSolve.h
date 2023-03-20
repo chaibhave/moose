@@ -82,6 +82,7 @@ public:
     CONVERGED_ABS,
     CONVERGED_REL,
     EXACT_GUESS,
+    CONVERGED_XTOL,
     NOT_CONVERGED
   };
 
@@ -334,6 +335,12 @@ NestedSolve::nonlinear(V & guess, T compute)
       _state = State::CONVERGED_REL;
       return true;
     }
+
+    if (delta.cwiseAbs().maxCoeff() <= _delta_thresh)
+    {
+      _state = State::CONVERGED_XTOL;
+      return true;
+    }
     return false;
   };
 
@@ -347,23 +354,6 @@ NestedSolve::nonlinear(V & guess, T compute)
     // solve and apply next increment
     linear(jacobian, delta, residual);
 
-    auto max_delta_idx = delta.cwiseAbs().maxCoeff();
-
-    if (max_delta_idx <= _delta_thresh)
-    {
-      // std::cout << "Minimum delta X threshold reached \n";
-      _state = State::CONVERGED_REL;
-      return;
-    }
-
-    // std::cout << "Delta x inside nested solve = \n";
-    // for (unsigned int i = 0; i < delta.size(); ++i)
-    // {
-    //   std::cout << delta(i) << "\t";
-    //   // std::cout << "\n";
-    // }
-    // std::cout << "\n";
-
     guess -= delta;
     _n_iterations++;
 
@@ -374,7 +364,6 @@ NestedSolve::nonlinear(V & guess, T compute)
     guess += (1 - _alpha) * delta;
 
     r_square = normSquare(residual);
-    // std::cout << "\nAlpha = "<<_alpha<<", Residual square = " << r_square << "\n";
   }
 
   // if we exceed the max iterations, we could still be converged
