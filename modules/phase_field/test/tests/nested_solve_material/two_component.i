@@ -33,7 +33,7 @@
   [w_Ni]
   []
   [w_Cr]
-  []  
+  []
   # order parameter
   [eta]
     order = FIRST
@@ -46,8 +46,6 @@
     order = CONSTANT
     family = MONOMIAL
   []
-
-
 
 []
 [ICs]
@@ -62,15 +60,14 @@
     int_width = 1
   []
 
-
   [c_Ni]
     variable = c_Ni
     type = SmoothCircleIC
     x1 = 0.0
     y1 = 0.0
     radius = 5
-    invalue = 9.49999706e-01 ##${fparse 1 - 0.0561 - 2.25398947448865e-07}
-    outvalue = 8.01083915e-09 ##1e-6
+    invalue = '${fparse 1 - 0.0561 - 2.25398947448865e-07}'
+    outvalue = 1e-10
     int_width = 1
   []
   [c_Cr]
@@ -79,25 +76,25 @@
     x1 = 0.0
     y1 = 0.0
     radius = 5
-    invalue = 5.00000000e-02 ##0.0561
-    outvalue = 8.99014793e-03 ##1e-4
+    invalue = 0.0561
+    outvalue = 1e-4
     int_width = 1
   []
 []
-[BCs]
-  [c_Ni_right]
-    type = DirichletBC
-    variable = c_Ni
-    value = ${fparse 1 - 0.0561 - 2.25398947448865e-07} ##8e-9
-    boundary = right
-  []
-  [c_Cr_right]
-    type = DirichletBC
-    variable = c_Cr
-    value = 0.0561 ##4e-3
-    boundary = right
-  []
-[]
+# [BCs]
+#   [c_Ni_right]
+#     type = DirichletBC
+#     variable = c_Ni
+#     value = 8e-9 ##${fparse 1 - 0.0561 - 2.25398947448865e-07} ##
+#     boundary = right
+#   []
+#   [c_Cr_right]
+#     type = DirichletBC
+#     variable = c_Cr
+#     value = 4e-3 ##0.0561 ##
+#     boundary = right
+#   []
+# []
 [Materials]
   # Free energy of the matrix
   [f_metal]
@@ -154,8 +151,8 @@
   [equipot_ni]
     type = DerivativeParsedMaterial
     property_name = 'equipot_ni'
-    material_property_names = 'f_metal x_ni_m x_cr_m mu_ni_m:=D[f_metal,x_ni_m] f_melt x_ni_s x_cr_s mu_ni_s:=D[f_melt,x_ni_s]' 
-    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    material_property_names = 'f_metal(x_ni_m,x_cr_m) x_ni_m x_cr_m mu_ni_m:=D[f_metal,x_ni_m] f_melt(x_ni_s,x_cr_s) x_ni_s x_cr_s mu_ni_s:=D[f_melt,x_ni_s]'
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s f_metal f_melt'
     # expression = 'mu_ni_m - mu_ni_s'
     expression = '(8090.0085*log(x_ni_m) - 8089.9721271854*log(x_ni_s) - 8090.0085*log(-x_cr_m - x_ni_m + 1) + 8089.9721271854*log(-x_cr_s - x_ni_s + 1) - 419926.567737007 + 21499.408*log(973))/96500'
     derivative_order = 2
@@ -164,8 +161,8 @@
   []
   [equipot_cr]
     type = DerivativeParsedMaterial
-    material_property_names = 'f_metal x_ni_m x_cr_m mu_cr_m:=D[f_metal,x_cr_m] f_melt x_ni_s x_cr_s  mu_cr_s:=D[f_melt,x_cr_s]' #mu_cr_m:=D[f_metal,x_cr_m] 
-    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    material_property_names = 'f_metal(x_ni_m,x_cr_m) x_ni_m x_cr_m mu_cr_m:=D[f_metal,x_cr_m] f_melt(x_ni_s,x_cr_s) x_ni_s x_cr_s  mu_cr_s:=D[f_melt,x_cr_s]' #mu_cr_m:=D[f_metal,x_cr_m] 
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s f_metal f_melt'
     property_name = 'equipot_cr'
     upstream_materials = 'f_metal f_melt omega_metal omega_melt'
     # expression = 'mu_cr_m - mu_cr_s' 
@@ -197,18 +194,13 @@
   [C]
     type = DerivativeParsedMaterial
     material_property_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
-    # expression = '(x_ni_m>0)&(x_cr_m>0)&(x_ni_m+x_cr_m<1)&(x_ni_s>0)&(x_cr_s>0)&(x_ni_s+x_cr_s<1)'
-    #' & (x_ni_s<1)&(x_cr_s<1)&((x_ni_s+x_cr_s)<1.0)'
-
-    expression = '(x_ni_m>0.0) & (x_ni_s>0.0) & (x_cr_m>0.0) & (x_cr_s>0.0) & ((x_ni_m+x_cr_m)<1.0) & (x_ni_s+x_cr_s<1.0)'  
-
+    expression = '(x_ni_m>0.0) & (x_ni_s>0.0) & (x_cr_m>0.0) & (x_cr_s>0.0) & ((x_ni_m+x_cr_m)<1.0) & (x_ni_s+x_cr_s<1.0)'
     property_name = 'C'
     derivative_order = 0
     enable_jit = true
     epsilon = 0.0
     disable_fpoptimizer = true
     compute = false
-    
   []
 
   # [NestedNewtonSolve]
@@ -259,7 +251,6 @@
   #   conditions = C
   #   max_damping_iters = 15
   # []
-  
   # h(eta)
   # [h_eta]
   #   type = SwitchingFunctionMaterial
@@ -288,16 +279,15 @@
   []
 []
 
-
 [Kernels]
   # Cahn-Hilliard Equation
   #
-  [./chempot_Ni]
+  [chempot_Ni]
     type = CHSplitChemicalPotential
     variable = w_Ni
     chemical_potential_prop = 'df_melt/dx_ni_s'
     c = c_Ni
-  [../]
+  []
 
   [dc_Ni_dt]
     type = TimeDerivative
@@ -311,12 +301,12 @@
     args = 'eta w_Cr'
   []
 
-  [./chempot_Cr]
+  [chempot_Cr]
     type = CHSplitChemicalPotential
     variable = w_Cr
     chemical_potential_prop = 'df_melt/dx_cr_s'
     c = c_Cr
-  [../]
+  []
   [dc_Cr_dt]
     type = TimeDerivative
     variable = c_Cr
@@ -368,32 +358,31 @@
 # []
 
 [AuxKernels]
-#   [GlobalFreeEnergy]
-#     variable = Fglobal
-#     type = KKSGlobalFreeEnergy
-#     fa_name = f_metal
-#     fb_name = f_melt
-#     w = 0.4
-#   []
+  #   [GlobalFreeEnergy]
+  #     variable = Fglobal
+  #     type = KKSGlobalFreeEnergy
+  #     fa_name = f_metal
+  #     fb_name = f_melt
+  #     w = 0.4
+  #   []
   # [w_Ni_val]
   #   type = NodalPatchRecoveryAux
-    
   # []
 
 []
 [Executioner]
   type = Transient
-  solve_type = NEWTON
+  solve_type = NEWTON ##PJFNK
   scheme = bdf2
-  petsc_options_iname = '-pc_type' 
-  petsc_options_value = 'lu' 
+  petsc_options_iname = '-pc_type'
+  petsc_options_value = 'lu'
   l_tol = 1e-3
   nl_rel_tol = 1e-08
   nl_abs_tol = 1e-9
   l_max_its = 100
   nl_max_its = 100
   end_time = 10
-  num_steps = 0#1000
+  num_steps = 1 #1000
   # automatic_scaling = true
   # dt = 1e-6
   [TimeStepper]
@@ -414,14 +403,14 @@
 # Precondition using handcoded off-diagonal terms
 #
 [Preconditioning]
-  # [full]
-  #   type = SMP
-  #   full = true
-  # []
-  [FD]
-    type = FDP
+  [full]
+    type = SMP
     full = true
   []
+  # [FD]
+  #   type = FDP
+  #   full = true
+  # []
 []
 [Outputs]
   file_base = kks_example_nested
