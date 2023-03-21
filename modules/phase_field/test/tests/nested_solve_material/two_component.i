@@ -139,14 +139,6 @@
     ##outputs = exodus
     output_properties = 'omega_melt'
   []
-  # [M_Ni]
-  #   type = DerivativeParsedMaterial
-  #   property_name = 'M_Ni'
-  #   coupled_variables = 'eta c_Cr c_Ni w_Cr w_Ni'
-  #   material_property_names = 'd2f_metal_dx_ni_m d2f_melt_dx_ni_s h'
-  #   additional_derivative_symbols = 'x_ni_m x_ni_s x_cr_m x_cr_s'
-  #   expression = 'h*(1/d2f_metal/dx_ni_m + 1/d2f_melt/dx_ni_s)'
-  # []
 
   [equipot_ni]
     type = DerivativeParsedMaterial
@@ -203,26 +195,13 @@
     compute = false
   []
 
-  # [NestedNewtonSolve]
-  #   type = NestedSolveMaterial
-  #   xi_names = 'x_ni_m x_cr_m x_ni_s x_cr_s'
-  #   Ri = 'ni_global_conc cr_global_conc equipot_ni equipot_cr'
-  #   xi_IC = '${fparse 1 - 2e-6} 1e-6 2.87568572e-08 1.00000000e-04'
-  #   #outputs = exodus
-  #   output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
-  #   absolute_tolerance = 1e-12
-  #   relative_tolerance = 1e-8
-  #   min_iterations = 1
-  #   max_iterations = 25
-  # []
-
   [TestDampedNewtonSolve]
     type = DampedNestedSolveMaterial
 
     xi_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
     Ri = 'equipot_ni ni_global_conc equipot_cr cr_global_conc'
     xi_IC = '0.33 0.33 0.33 0.33'
-    outputs = exodus
+    # outputs = exodus
     output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     absolute_tolerance = 1e-12
     relative_tolerance = 1e-8
@@ -234,35 +213,20 @@
     max_damping_iters = 30
     delta_X_threshold = 2e-16
   []
-  # [TestDampedNewtonSolve]
-  #   type = DampedNestedSolveMaterial
-
-  #   xi_names = 'x_ni_s x_cr_s'
-  #   Ri = 'equipot_ni equipot_cr'
-  #   xi_IC = '0.33 0.33'
-  #   #outputs = exodus
-  #   output_properties = 'x_ni_s x_cr_s'
-  #   absolute_tolerance = 1e-12
-  #   relative_tolerance = 1e-8
-  #   min_iterations = 1
-  #   max_iterations = 100
-  #   damping_factor = 0.8
-  #   damping_algorithm = BOUNDED_DAMP
-  #   conditions = C
-  #   max_damping_iters = 15
-  # []
+  
+  [dx_ni_m_dc_Ni]
+    type = DerivativeParsedMaterial
+    coupled_variables = 'eta c_Cr c_Ni'
+    material_property_names = 'x_ni_m x_ni_s x_cr_m x_cr_s h dh_deta:=D[h,eta] f_metal f_melt f2_metal:=D[f_metal,x_ni_m,x_ni_m] f2_melt:=D[f_melt,x_ni_s,x_ni_s]'
+    expression = 'f2_melt/(h*f2_melt + (1-h)*f2_metal )'
+    property_name = 'dx_ni_m/dc_Ni'
+  []
+  
   # h(eta)
-  # [h_eta]
-  #   type = SwitchingFunctionMaterial
-  #   h_order = HIGH
-  #   eta = eta
-  #   #outputs = exodus
-  #   output_properties = 'h'
-  # []
   [h]
     type = DerivativeParsedMaterial
     coupled_variables = 'eta'
-    expression = eta #'eta^2/(eta^2 + (1-eta)^2 )'
+    expression = 'eta^2/(eta^2 + (1-eta)^2 )'
     property_name = 'h'
   []
   # g(eta)
@@ -323,14 +287,14 @@
     type = TimeDerivative
     variable = eta
   []
-  [ACBulkF]
-    type = KKSACBulkF
-    variable = eta
-    fa_name = omega_metal
-    fb_name = omega_melt
-    coupled_variables = 'c_Cr c_Ni w_Cr w_Ni'
-    w = 0.4
-  []
+  # [ACBulkF]
+  #   type = KKSACBulkF
+  #   variable = eta
+  #   fa_name = omega_metal
+  #   fb_name = omega_melt
+  #   coupled_variables = 'c_Cr c_Ni w_Cr w_Ni'
+  #   w = 0.4
+  # []
   # [ACBulkC]
   #   type = KKSACBulkC
   #   variable = eta
@@ -339,12 +303,12 @@
   #   fa_name = fm
   #   mob_name = L
   # []
-  [ACInterface]
-    type = ACInterface
-    variable = eta
-    kappa_name = kappa
-    mob_name = L
-  []
+  # [ACInterface]
+  #   type = ACInterface
+  #   variable = eta
+  #   kappa_name = kappa
+  #   mob_name = L
+  # []
 []
 
 # [UserObjects]
@@ -414,5 +378,5 @@
 []
 [Outputs]
   file_base = kks_example_nested
-  exodus = true
+  # exodus = true
 []
