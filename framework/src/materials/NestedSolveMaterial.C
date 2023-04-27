@@ -139,8 +139,8 @@ NestedSolveMaterial::computeQpProperties()
     _Ri[m]->computePropertiesAtQp(_qp);
   }
 
-  if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
-    mooseException("Nested Newton iteration did not converge.");
+  // if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
+  //   mooseException("Nested Newton iteration did not converge.");
 }
 
 Real

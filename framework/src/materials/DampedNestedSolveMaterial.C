@@ -99,6 +99,7 @@ DampedNestedSolveMaterial::update_guess(const NestedSolve::Value<> & guess)
         _condition->computePropertiesAtQp(_qp);
         if (++damp_ctr > _max_damping_iters)
         {
+          // std::cout << "Insufficient damping to satisfy conditions.\n";
           break;
         }
 
