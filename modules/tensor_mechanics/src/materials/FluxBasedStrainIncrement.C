@@ -51,6 +51,17 @@ FluxBasedStrainIncrement::computeQpProperties()
   computeFluxGradTensor();
 
   _strain_increment[_qp] = -0.5 * (_flux_grad_tensor + _flux_grad_tensor.transpose());
+  // auto dil_strain = (_strain_increment[_qp](0,0)+ _strain_increment[_qp](1,1)+_strain_increment[_qp](2,2) )/3;
+  
+  // _strain_increment[_qp](0,0) += dil_strain;
+  // _strain_increment[_qp](1,1) += dil_strain;
+  // _strain_increment[_qp](2,2) += dil_strain;
+  //   _strain_increment[_qp](0,0) =0.0;
+  // _strain_increment[_qp](1,1) = 0.0;
+  // _strain_increment[_qp](2,2) = 0.0;
+
+  
+
   _strain_increment[_qp] *= (1.0 - _gb[_qp]) * _dt;
 }
 
