@@ -365,7 +365,7 @@
   l_max_its = 100
   nl_max_its = 100
   end_time = 10
-  num_steps = 0 #1000
+  num_steps = 1 #1000
   # automatic_scaling = true
   # dt = 1e-6
   [TimeStepper]

@@ -145,12 +145,12 @@
       max_iterations = 1000
       absolute_tolerance = 1e-11
       relative_tolerance = 1e-10
-      damping_algorithm = DAMP_FALSE
+      damping_algorithm = BOUNDED_DAMP
       conditions = C
       outputs = exodus
     [../]
     [C]
-        type = ParsedMaterial
+        type = DerivativeParsedMaterial
         property_name = 'C'
         expression = '1.0'
         compute = false

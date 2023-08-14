@@ -5,11 +5,11 @@
 [Mesh]
   type = GeneratedMesh
   dim = 1
-  nx = ${fparse int ( 10 * xmax / sqrt(2) ) }
+  nx = ${fparse int ( 6 * xmax / sqrt(2) ) }
   ny = 15
   nz = 0
   xmin = 0
-  xmax = 50 #0
+  xmax = 500 #0
   ymin = -2.5
   ymax = 2.5
   zmin = 0
@@ -22,8 +22,8 @@
 [GlobalParams]
   enable_jit = false
   # profile = TANH
-  x_Cr_BC = 1e-4
-  x_Ni_BC = 8e-9 ##0.0000000080108391
+  x_Cr_BC = 1e-6
+  x_Ni_BC = 1e-16 ##0.0000000080108391
 
   # mu_Ni_BC = ${fparse ( 8089.9721271854 * log( ${GlobalParams/x_Ni_BC} ) - 8089.9721271854 * log( - ${GlobalParams/x_Cr_BC} - ${GlobalParams/x_Ni_BC} + 1 ) - 21499.408*log(973) + 253092.124999596 ) / 96500 }
   # mu_Cr_BC = ${fparse ( 8089.9721271854*log( ${GlobalParams/x_Cr_BC} ) - 8089.9721271854*log(- ${GlobalParams/x_Cr_BC} - ${GlobalParams/x_Ni_BC} + 1 ) - 26181.484*log(973) + 164050.988348729 ) / 96500 }
@@ -121,13 +121,13 @@
     type = ParsedFunction
     symbol_names = 'h1 '
     symbol_values = 'h_func'
-    expression = 'h1*0.9499997060782867 + (1-h1)*0.0000000080108391'
+    expression = 'h1* ${fparse 1 - 0.2 - 2.25e-7 } + (1-h1)*0.0000000080108391'
   []
   [c_Cr_func]
     type = ParsedFunction
     symbol_names = 'h1 '
     symbol_values = 'h_func'
-    expression = 'h1*0.05 + (1-h1)*0.0089901478135457'
+    expression = 'h1*0.2 + (1-h1)*0.0089901478135457'
   []
 
   [c_Ni_BC_func]
@@ -189,8 +189,7 @@
   [f_metal]
     type = DerivativeParsedMaterial
     property_name = f_metal
-    # expression = '(8090.0085*x_cr_m*log(x_cr_m) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*log(x_ni_m) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*log(-x_cr_m - x_ni_m + 1) + 123820.210087488)/96500'
-    expression = '(8090.0085*x_cr_m*plog(x_cr_m,err) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*plog(x_ni_m,err) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*plog(-x_cr_m - x_ni_m + 1,err) + 123820.210087488)/96500'
+    expression = '(8090.0085*x_cr_m*log(x_cr_m) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*log(x_ni_m) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*log(-x_cr_m - x_ni_m + 1) + 123820.210087488)/96500'
     # expression = '(x_cr_m*x_ni_m*(10523.5652 - 27907.1252*x_ni_m) + 8090.0085*x_cr_m*plog(x_cr_m,err) - 151569.384260127*x_cr_m + 8090.0085*x_ni_m*plog(x_ni_m,err) - 166834.442737411*x_ni_m + 8090.0085*(-x_cr_m - x_ni_m + 1)*plog(-x_cr_m - x_ni_m + 1,err) + 8090.0085*(5.64178064301999e-79*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^25 + 2.04326786303716e-48*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^15 + 4.89513034938089e-17*(-3605*x_cr_m*x_ni_m - 1109*x_cr_m + 633*x_ni_m)^5)*plog(-1.91*x_cr_m*x_ni_m - 2.46*x_cr_m + 0.528*x_ni_m + 1,err) + 123820.210087488)/96500'
     material_property_names = 'x_cr_m x_ni_m x_cr_s x_ni_s err'
     additional_derivative_symbols = 'x_cr_m x_ni_m x_cr_s x_ni_s'
@@ -203,31 +202,28 @@
   [f_melt]
     type = DerivativeParsedMaterial
     property_name = f_melt
-    # expression = '(8089.9721271854*x_cr_s*log(x_cr_s) + x_cr_s*(164050.988348729 - 26181.484*log(973)) + 8089.9721271854*x_ni_s*log(x_ni_s) + x_ni_s*(253092.124999596 - 21499.408*log(973)) + 8089.9721271854*(-x_cr_s - x_ni_s + 1)*log(-x_cr_s - x_ni_s + 1))/96500'
-    expression = '(8089.9721271854*x_cr_s*plog(x_cr_s,err) + x_cr_s*(164050.988348729 - 26181.484*log(973)) + 8089.9721271854*x_ni_s*plog(x_ni_s,err) + x_ni_s*(253092.124999596 - 21499.408*log(973)) + 8089.9721271854*(-x_cr_s - x_ni_s + 1)*plog(-x_cr_s - x_ni_s + 1,err))/96500'
+    expression = '(8089.9721271854*x_cr_s*log(x_cr_s) + x_cr_s*(164050.988348729 - 26181.484*log(973)) + 8089.9721271854*x_ni_s*log(x_ni_s) + x_ni_s*(253092.124999596 - 21499.408*log(973)) + 8089.9721271854*(-x_cr_s - x_ni_s + 1)*log(-x_cr_s - x_ni_s + 1))/96500'
     material_property_names = 'x_cr_m x_ni_m x_cr_s x_ni_s err'
     additional_derivative_symbols = 'x_cr_m x_ni_m x_cr_s x_ni_s'
     derivative_order = 3
-    compute = false
-    ##outputs = exodus
+    compute = false    ##outputs = exodus
   []
 
   [omega_chem]
     type = DerivativeParsedMaterial
     property_name = omega_chem
     material_property_names = 'f_metal f_melt x_ni_m x_cr_m x_ni_s x_cr_s h h2'
-    coupled_variables = 'w_Ni w_Cr'
-    expression = '(f_metal-w_Ni*x_ni_m-w_Cr*x_cr_m)*h + (f_melt-w_Ni*x_ni_s-w_Cr*x_cr_s)*h2'
-    # outputs = exodus
+    coupled_variables = 'w_Ni w_Cr c_Ni c_Cr'
+    expression = '(h*f_metal + h2*f_melt) - c_Ni*w_Ni - c_Cr*w_Cr' ##'(f_metal-w_Ni*x_ni_m-w_Cr*x_cr_m)*h + (f_melt-w_Ni*x_ni_s-w_Cr*x_cr_s)*h2'
+    outputs = exodus
     output_properties = omega_chem
-    compute = false
     derivative_order = 0
   []
   [M_Ni]
     type = DerivativeParsedMaterial
     property_name = M_Ni
     material_property_names = 'f_metal f_melt x_ni_m x_cr_m x_ni_s x_cr_s h h2 d2f_metal:=D[f_metal,x_ni_m,x_ni_m] d2f_melt:=D[f_melt,x_ni_s,x_ni_s]'
-    expression = '2e-7*h/d2f_metal + 1.0*h2/d2f_melt'
+    expression = '500*h/d2f_metal + 500.0*h2/d2f_melt'
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     coupled_variables = 'c_Ni c_Cr w_Ni w_Cr eta eta2'
     compute = false
@@ -236,9 +232,85 @@
     type = DerivativeParsedMaterial
     property_name = M_Cr
     material_property_names = 'f_metal f_melt x_ni_m x_cr_m x_ni_s x_cr_s h h2 d2f_metal:=D[f_metal,x_cr_m,x_cr_m] d2f_melt:=D[f_melt,x_cr_s,x_cr_s]'
-    expression = '2e-7*h/d2f_metal + 1.0*h2/d2f_melt'
+    expression = '500*h/d2f_metal + 500.0*h2/d2f_melt'
     additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     coupled_variables = 'c_Ni c_Cr w_Ni w_Cr eta eta2'
+    compute = false
+  []
+
+  # [C]
+  #   type = DerivativeParsedMaterial
+  #   material_property_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
+  #   expression = '(x_ni_m>0.0) & (x_ni_s>0.0) & (x_cr_m>0.0) & (x_cr_s>0.0) & ((x_ni_m+x_cr_m)<1.0) & (x_ni_s+x_cr_s<1.0)'
+  #   property_name = 'C'
+  #   derivative_order = 0
+  #   enable_jit = true
+  #   epsilon = 0.0
+  #   disable_fpoptimizer = true
+  #   compute = false
+  # []
+
+  # [KKS_nested_solve]
+  #   type = NestedKKSMultiPhaseMaterial
+  #   Fj_material = 'f_metal f_melt'
+  #   global_cs = 'c_Ni c_Cr'
+  #   all_etas = 'eta eta2'
+  #   hj_names = 'h h2'
+  #   ci_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
+  #   ci_IC = '0.33 0.33 0.33 0.33'
+  #   absolute_tolerance = 1e-12
+  #     relative_tolerance = 1e-8
+  #     min_iterations = 1
+  #     max_iterations = 500
+  #     damping_factor = 0.1
+  #     damping_algorithm = BOUNDED_DAMP
+  #     conditions = C
+  #     max_damping_iters = 20
+  #     delta_X_threshold = 1e-5 #2e-16
+  #   outputs = exodus
+  #   output_properties = 'x_ni_m x_ni_s x_cr_m x_cr_s'
+  # []
+
+  [equipot_ni]
+    type = DerivativeParsedMaterial
+    property_name = 'equipot_ni'
+    material_property_names = 'f_metal(x_ni_m,x_cr_m) x_ni_m x_cr_m mu_ni_m:=D[f_metal,x_ni_m] f_melt(x_ni_s,x_cr_s) x_ni_s x_cr_s mu_ni_s:=D[f_melt,x_ni_s]'
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s f_metal f_melt'
+    # expression = 'mu_ni_m - mu_ni_s'
+    expression = '(8090.0085*log(x_ni_m) - 8089.9721271854*log(x_ni_s) - 8090.0085*log(-x_cr_m - x_ni_m + 1) + 8089.9721271854*log(-x_cr_s - x_ni_s + 1) - 419926.567737007 + 21499.408*log(973))/96500'
+    derivative_order = 2
+    upstream_materials = 'f_metal f_melt'
+    compute = false
+  []
+  [equipot_cr]
+    type = DerivativeParsedMaterial
+    material_property_names = 'f_metal(x_ni_m,x_cr_m) x_ni_m x_cr_m mu_cr_m:=D[f_metal,x_cr_m] f_melt(x_ni_s,x_cr_s) x_ni_s x_cr_s  mu_cr_s:=D[f_melt,x_cr_s]' #mu_cr_m:=D[f_metal,x_cr_m] 
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s f_metal f_melt'
+    property_name = 'equipot_cr'
+    upstream_materials = 'f_metal f_melt'
+    # expression = 'mu_cr_m - mu_cr_s' 
+    expression = '(8090.0085*log(x_cr_m) - 8089.9721271854*log(x_cr_s) - 8090.0085*log(-x_cr_m - x_ni_m + 1) + 8089.9721271854*log(-x_cr_s - x_ni_s + 1) - 315620.372608856 + 26181.484*log(973))/96500'
+    derivative_order = 2
+    compute = false
+  []
+  [ni_global_conc]
+    type = DerivativeParsedMaterial
+    material_property_names = 'x_ni_m x_ni_s x_cr_m x_cr_s h'
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    coupled_variables = 'c_Ni c_Cr'
+    property_name = 'ni_global_conc'
+    expression = 'c_Ni - (h*x_ni_m + (1-h)*x_ni_s)'
+    derivative_order = 2
+    compute = false
+  []
+  [cr_global_conc]
+    type = DerivativeParsedMaterial
+    material_property_names = 'x_ni_m x_ni_s x_cr_m x_cr_s h'
+    additional_derivative_symbols = 'x_ni_m x_cr_m x_ni_s x_cr_s'
+    coupled_variables = 'c_Ni c_Cr'
+    property_name = 'cr_global_conc'
+    expression = 'c_Cr - (h*x_cr_m + (1-h)*x_cr_s)'
+    derivative_order = 2
     compute = false
   []
 
@@ -252,27 +324,25 @@
     epsilon = 0.0
     disable_fpoptimizer = true
     compute = false
-    upstream_materials = 'omega_chem M_Ni M_Cr'
   []
 
-  [KKS_nested_solve]
-    type = NestedKKSMultiPhaseMaterial
-    Fj_material = 'f_metal f_melt'
-    global_cs = 'c_Ni c_Cr'
-    all_etas = 'eta eta2'
-    hj_names = 'h h2'
-    ci_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
-    ci_IC = '0.9 1e-6 0.09 1e-4'
+  [TestDampedNewtonSolve]
+    type = DampedNestedSolveMaterial
+
+    xi_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
+    Ri = 'equipot_ni ni_global_conc equipot_cr cr_global_conc'
+    xi_IC = '0.33 1e-3 0.33 1e-3'
+    outputs = exodus
+    output_properties = 'x_ni_m x_cr_m x_ni_s x_cr_s'
     absolute_tolerance = 1e-12
     relative_tolerance = 1e-8
     min_iterations = 1
-    max_iterations = 100
-    damping_factor = 0.8
+    max_iterations = 300
+    damping_factor = 0.1
     damping_algorithm = BOUNDED_DAMP
     conditions = C
-    max_damping_iters = 50
-    delta_X_threshold = 1e-20 #2e-16
-    # outputs = exodus
+    max_damping_iters = 30
+    delta_X_threshold = 1e-5 #2e-16
   []
 
   [KKS_phase_conc_derivatives]
@@ -325,8 +395,8 @@
   # constant properties
   [constants]
     type = GenericConstantMaterial
-    prop_names = 'M     L   kappa err'
-    prop_values = '1e-4 1e-4 0.4 1e-15'
+    prop_names = 'M     L   kappa err   gamma mu'
+    prop_values = '1e-4 100  2     1e-15 1.5   2'
   []
   
 []
@@ -391,9 +461,15 @@
     Fj_names = 'f_metal f_melt'
     ci_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
     coupled_variables = 'c_Cr c_Ni w_Cr w_Ni'
-    wi = 0.4
+    wi = 0.0
     gi_name = g
   []
+  [ACGrGr_eta]
+      type = ACGrGrMulti
+      gamma_names = 'gamma'
+      v = 'eta2'
+      variable = 'eta'
+    []
   [ACBulkC]
     type = NestKKSMultiACBulkC
     variable = eta
@@ -427,8 +503,14 @@
     Fj_names = 'f_metal f_melt'
     ci_names = 'x_ni_m x_ni_s x_cr_m x_cr_s'
     coupled_variables = 'c_Cr c_Ni w_Cr w_Ni'
-    wi = 0.4
+    wi = 0 #0.4
     gi_name = g2
+  []
+  [ACGrGr_eta2]
+    type = ACGrGrMulti
+    gamma_names = 'gamma'
+    v = 'eta'
+    variable = 'eta2'
   []
   [ACBulkC2]
     type = NestKKSMultiACBulkC
@@ -480,24 +562,24 @@
 # []
 
 [Dampers]
-  [c_Ni]
-    type = BoundingValueElementDamper
-    variable = c_Ni
-    max_value = '${fparse 1.0 - 1e-30}'
-    min_value = 1e-16
-    min_damping = 0.1
-  []
-  [c_Cr]
-    type = BoundingValueElementDamper
-    variable = c_Cr
-    max_value = '${fparse 1.0 - 1e-30}'
-    min_value = 1e-16
-    min_damping = 0.1
-  []
+  # [c_Ni]
+  #   type = BoundingValueElementDamper
+  #   variable = c_Ni
+  #   max_value = '${fparse 1.0 - 1e-16}'
+  #   min_value = 1e-16
+  #   min_damping = 0.1
+  # []
+  # [c_Cr]
+  #   type = BoundingValueElementDamper
+  #   variable = c_Cr
+  #   max_value = '${fparse 1.0 - 1e-16}'
+  #   min_value = 1e-16
+  #   min_damping = 0.1
+  # []
   # [eta]
   #   type = BoundingValueElementDamper
   #   variable = eta
-  #   max_value = '${fparse 1.0 - 1e-30}'
+  #   max_value = '${fparse 1.0 - 1e-16}'
   #   min_value = 1e-16
   #   min_damping = 0.1
   # []
@@ -516,9 +598,14 @@
   # petsc_options_value = 'lu vinewtonssls' 
   # petsc_options_iname = '-pc_type -snes_type -pc_factor_shift_type -pc_factor_shift_amount '
   # petsc_options_value = 'lu vinewtonrsls NONZERO 1e-10'
-  petsc_options_iname = '-pc_type -pc_factor_mat_solver_package -snes_type' # -pc_factor_shift_type -pc_factor_shift_amount 
-  petsc_options_value = 'lu superlu_dist vinewtonrsls' # NONZERO 1e-10
-# petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart -pc_hypre_boomeramg_strong_threshold -snes_type'# -pc_factor_shift_type -pc_factor_shift_amount '
+  # petsc_options_iname = '-pc_type -pc_factor_mat_solver_package -snes_type' # -pc_factor_shift_type -pc_factor_shift_amount 
+  # petsc_options_value = 'lu superlu_dist vinewtonrsls' # NONZERO 1e-10
+
+  petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
+  petsc_options_value = 'lu superlu_dist' 
+
+
+  # petsc_options_iname = '-pc_type -pc_hypre_type -ksp_gmres_restart -pc_hypre_boomeramg_strong_threshold -snes_type'# -pc_factor_shift_type -pc_factor_shift_amount '
 #   petsc_options_value = 'hypre    boomeramg      31                 0.7 vinewtonrsls'# NONZERO 1e-10'
 
   # petsc_options_iname = '-pc_type -ksp_grmres_restart -sub_ksp_type -sub_pc_type -pc_asm_overlap -snes_type'# -pc_factor_shift_type -pc_factor_shift_amount '
@@ -527,11 +614,11 @@
   
   l_tol = 1e-3
   nl_rel_tol = 1e-08
-  nl_abs_tol = 1e-10
+  nl_abs_tol = 1e-9
   l_max_its = 100
   nl_max_its = 18
   end_time = 3.6e6
-  # num_steps = 1000
+  # num_steps = 100
   # automatic_scaling = true
   dt = 1e-3
   dtmin = 1e-20
@@ -540,8 +627,8 @@
     dt = 1e-3
     iteration_window = 2
     optimal_iterations = 15
-    growth_factor = 1.25
-    cutback_factor = 0.8
+    growth_factor = 1.1
+    cutback_factor = 0.909
   []
   # [Adaptivity]
   #   max_h_level = 2
@@ -578,9 +665,9 @@
   []
 []
 
-# [Debug]
-#   show_var_residual_norms = true
-# []
+[Debug]
+  show_var_residual_norms = true
+[]
 
 #
 # Precondition using handcoded off-diagonal terms
