@@ -184,7 +184,11 @@ NestedKKSMultiPhaseMaterial::computeQpProperties()
   NestedSolve::Value<> solution(_num_c * _num_j);
 
   for (unsigned int m = 0; m < _num_c * _num_j; ++m)
-    solution(m) = (*_ci_old[m])[_qp];
+    {
+      solution(m) = (*_ci_old[m])[_qp]; //_ci_IC[m]; //
+      (*_prop_ci[m])[_qp] = (*_ci_old[m])[_qp]; //_ci_IC[m];
+    }
+    
 
   _nested_solve.setAbsoluteTolerance(_abs_tol);
   _nested_solve.setRelativeTolerance(_rel_tol);
@@ -197,13 +201,13 @@ NestedKKSMultiPhaseMaterial::computeQpProperties()
 
     for (unsigned int m = 0; m < _num_j; ++m)
       _Fj_mat[m]->computePropertiesAtQp(_qp);
-
+    residual.setZero();
     // assign residual functions
     for (unsigned int m = 0; m < _num_c; ++m)
     {
       // if (((*_prop_c[m])[_qp] <= 0.0))
       //   mooseError("Negative values of global concentrations");
-  
+
       for (unsigned int n = 0; n < _num_j - 1; ++n)
         residual(m * _num_j + n) = (*_dFidci[n][m])[_qp] - (*_dFidci[n + 1][m])[_qp];
 
@@ -212,7 +216,7 @@ NestedKKSMultiPhaseMaterial::computeQpProperties()
       for (unsigned int l = 0; l < _num_j; ++l)
         residual((m + 1) * _num_j - 1) += (*_prop_hj[l])[_qp] * (*_prop_ci[m * _num_j + l])[_qp];
     }
-
+    jacobian.setZero();
     // fill in the non-zero terms in jacobian
     for (unsigned int m = 0; m < _num_c; ++m)
     {
@@ -237,21 +241,28 @@ NestedKKSMultiPhaseMaterial::computeQpProperties()
 
   // assign solution to ci
   for (unsigned int m = 0; m < _num_c * _num_j; ++m)
+  {
     (*_prop_ci[m])[_qp] = solution[m];
+  }
 
   // Update final values for free energies
   for (unsigned int m = 0; m < _num_j; ++m)
     _Fj_mat[m]->computePropertiesAtQp(_qp);
-  _condition->computePropertiesAtQp(_qp);
-  if (!((*_C)[_qp]))
-    std::cout << "Condition failed after nested solve. \n";
+  
+  // // Update condition value
+  // _condition->computePropertiesAtQp(_qp);
+  // if (!((*_C)[_qp]))
+  //   std::cout << "Condition failed after nested solve. \n";
 
-  // if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
-  // //   {
-  // //     // auto state = _nested_solve.getState();
-  // //     // std::cout << "\n" << state;
+  // std::cout << "KKS side state = " << _nested_solve.is_converged() << "\n";
+
+  // if (_nested_solve.getState() == 0 )
+  //   {
   //     mooseError("Nested Newton iteration did not converge.");
-  // //   }
+  //   } 
+     //     // auto state = _nested_solve.getState();
+  //     // std::cout << "\n" << state;
+
 }
 
 Real
@@ -293,6 +304,13 @@ NestedKKSMultiPhaseMaterial::update_guess(const NestedSolve::Value<> & guess)
     default:
       mooseError("Damping_algorithm does not match the given options.");
   }
+
+  // std::cout << "Updated guess : ";
+  for (unsigned int m = 0; m < guess.size(); ++m)
+  {
+    // std::cout << (*_prop_ci[m])[_qp] << "\t";
+  }
+  // std::cout << "\n\n";
   return _alpha;
 }
 

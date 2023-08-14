@@ -137,7 +137,12 @@ protected:
   void linear(const J & A, V & x, const V & b) const
   {
     // we could make the linear solve method configurable here
-    x = A.householderQr().solve(b);
+    if (A.determinant() == 0)
+    {
+      // std::cout << "Determinant of the Jacobian is zero at initial solve step.\n";
+      mooseError("Jacobian matrix is singular.");
+    }
+    x = A.colPivHouseholderQr().solve(b); //householderQr()
   }
 
   void linear(Real A, Real & x, Real b) const { x = b / A; }
@@ -312,6 +317,11 @@ NestedSolve::nonlinear(V & guess, T compute)
 
   _n_iterations = 0;
   compute(guess, residual, jacobian);
+  if (jacobian.determinant() == 0)
+    {
+      // std::cout << "Determinant of the Jacobian is zero at initial solve step.\n";
+      mooseError("Determinant of the Jacobian is zero at initial solve step.");
+    }
 
   // compute first residual norm for relative convergence checks
   auto r0_square = normSquare(residual);
@@ -335,8 +345,7 @@ NestedSolve::nonlinear(V & guess, T compute)
       _state = State::CONVERGED_REL;
       return true;
     }
-
-    if (delta.cwiseAbs().maxCoeff() <= _delta_thresh)
+    if( (delta.cwiseAbs().array() < guess.cwiseAbs().array()*_delta_thresh  ).all() )
     {
       _state = State::CONVERGED_XTOL;
       return true;
@@ -347,26 +356,82 @@ NestedSolve::nonlinear(V & guess, T compute)
   // perform non-linear iterations
   while (_n_iterations < _max_iterations)
   {
+    // if (_n_iterations == 0)
+    // {
+    // std::cout << "Guess #" << _n_iterations << ": ";
+    // for (unsigned int m = 0; m < guess.size(); ++m)
+    // {
+    //   std::cout << guess(m) << "\t";
+      
+    // }
+    // std::cout << "\n";
+    
+    // std::cout << "Residual #" << _n_iterations << ": ";
+    // for (unsigned int m = 0; m < guess.size(); ++m)
+    // {
+    //   std::cout << residual(m) << "\t";
+    // }
+    // std::cout << "\n";
+
+    // std::cout << "Jacobian #" << _n_iterations << ": ";
+    // for (unsigned int m = 0; m < guess.size(); ++m)
+    // {
+    //   for (unsigned int n = 0; n < guess.size(); ++n)
+    //       std::cout << jacobian(m,n) << "\t";
+    // std::cout << "\n";
+    // }
+    
+
+
+    // }
+
+    // for (unsigned int m = 0; m < guess.size(); ++m)
+    // {
+    // if(isnan(residual(m)))
+    //     {
+    //       mooseException("Residual is NaN");
+    //     }
+    // }
     // check convergence
     if (_n_iterations >= _min_iterations && is_converged())
+    {
+      // std::cout << "Converged status - > " << is_converged() ;
       return;
+    }
+      
 
     // solve and apply next increment
     linear(jacobian, delta, residual);
-
+    
+   
     guess -= delta;
     _n_iterations++;
 
-    // compute residual and jacobian for the next iteration
+
+    // // compute residual and jacobian for the next iteration
     Real _alpha = compute(guess, residual, jacobian);
 
-    // Dampen output if requested
+    // // Dampen output if requested
     guess += (1 - _alpha) * delta;
 
     r_square = normSquare(residual);
   }
+  // std::cout << "Converged status - > " << is_converged() << "\n";
 
   // if we exceed the max iterations, we could still be converged
   if (!is_converged())
+  {
     _state = State::NOT_CONVERGED;
+    std::cout << "Final residual" << r_square << "\tInitial residual" << r0_square << "\n";
+    std::cout << "Guess: ";
+    for (unsigned int m = 0; m < guess.size(); ++m)
+    {
+      std::cout << guess(m)*_delta_thresh << "\t" << delta(m) <<"\n";
+      
+    }
+    std::cout << "\n";
+    // auto temp = guess + delta;
+    // mooseError("Nested Newton iteration did not converge.");
+  }
+    
 }
