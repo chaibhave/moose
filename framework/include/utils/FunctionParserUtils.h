@@ -97,6 +97,9 @@ protected:
 
   /// Array to stage the parameters passed to the functions when calling Eval.
   std::vector<GenericReal<is_ad>> _func_params;
+
+  /// fuzzy compariosn tolerance
+  const Real _epsilon;
 };
 
 template <>

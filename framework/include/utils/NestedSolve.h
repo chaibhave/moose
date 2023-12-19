@@ -492,7 +492,6 @@ NestedSolveTempl<is_ad>::nonlinearDamped(V & guess, T && compute, C && computeCo
     return;
   }
   auto r_square = r0_square;
-
   /// perform non-linear iterations
   while (_n_iterations < _max_iterations)
   {
@@ -514,7 +513,6 @@ NestedSolveTempl<is_ad>::nonlinearDamped(V & guess, T && compute, C && computeCo
     unsigned int damping_iterations = 0;
     auto prev_guess = guess;
     guess -= delta;
-
     while (!computeCondition(guess) && (damping_iterations < _max_damping_iterations))
     {
       alpha *= _damping_factor;

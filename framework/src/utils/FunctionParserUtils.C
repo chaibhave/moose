@@ -42,7 +42,7 @@ FunctionParserUtils<is_ad>::validParams()
   params.addParamNamesToGroup(
       "enable_jit enable_ad_cache enable_auto_optimize disable_fpoptimizer evalerror_behavior",
       "Advanced");
-
+  params.addParam<Real>("epsilon", FunctionParser::epsilon(), "Fuzzy comparison tolerance");
   return params;
 }
 
@@ -62,7 +62,8 @@ FunctionParserUtils<is_ad>::FunctionParserUtils(const InputParameters & paramete
     _disable_fpoptimizer(parameters.get<bool>("disable_fpoptimizer")),
     _enable_auto_optimize(parameters.get<bool>("enable_auto_optimize") && !_disable_fpoptimizer),
     _evalerror_behavior(parameters.get<MooseEnum>("evalerror_behavior").getEnum<FailureMethod>()),
-    _quiet_nan(std::numeric_limits<Real>::quiet_NaN())
+    _quiet_nan(std::numeric_limits<Real>::quiet_NaN()),
+    _epsilon(parameters.get<Real>("epsilon"))
 {
 #ifndef LIBMESH_HAVE_FPARSER_JIT
   if (_enable_jit)
@@ -85,21 +86,28 @@ template <bool is_ad>
 GenericReal<is_ad>
 FunctionParserUtils<is_ad>::evaluate(SymFunctionPtr & parser, const std::string & name)
 {
-  // null pointer is a shortcut for vanishing derivatives, see functionsOptimize()
+  /// null pointer is a shortcut for vanishing derivatives, see functionsOptimize()
   if (parser == NULL)
     return 0.0;
 
-  // evaluate expression
+  /// set desired epsilon
+  auto tmp_eps = parser->epsilon();
+  parser->setEpsilon(_epsilon);
+
+  /// evaluate expression
   auto result = parser->Eval(_func_params.data());
 
-  // fetch fparser evaluation error (set to unknown if the JIT result is nan)
+  /// restore epsilon
+  parser->setEpsilon(tmp_eps);
+
+  /// fetch fparser evaluation error (set to unknown if the JIT result is nan)
   int error_code = _enable_jit ? (std::isnan(result) ? -1 : 0) : parser->EvalError();
 
-  // no error
+  /// no error
   if (error_code == 0)
     return result;
 
-  // hard fail or return not a number
+  /// hard fail or return not a number
   switch (_evalerror_behavior)
   {
     case FailureMethod::nan:
