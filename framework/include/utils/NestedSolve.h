@@ -529,7 +529,11 @@ NestedSolveTempl<is_ad>::nonlinearDamped(V & guess, T && compute, C && computeCo
 
   /// @{ if we exceed the max iterations, we could still be converged (considering the acceptable multiplier)
   if (!isConverged(r0_square, r_square, /*acceptable=*/true))
-    _state = State::NOT_CONVERGED;
+    {
+      std::cout << "Num iters = " << _n_iterations << ", R_sq_0 = " << r0_square << ", R_sq = " << r_square << ", del_X = " << delta<<"\n";
+      _state = State::NOT_CONVERGED;
+    }
+    
   /// @}
 }
 

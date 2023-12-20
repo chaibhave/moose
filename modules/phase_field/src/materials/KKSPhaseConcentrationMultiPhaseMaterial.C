@@ -188,7 +188,7 @@ KKSPhaseConcentrationMultiPhaseMaterial::computeQpProperties()
 
   /// @{ initialize first guess using the solution from previous step
   for (const auto m : make_range(_num_c * _num_j))
-    solution(m) = (*_ci_old[m])[_qp];
+    solution(m) = _ci_IC[m]; //(*_ci_old[m])[_qp];
   /// @}
 
   _nested_solve.setAbsoluteTolerance(_abs_tol);
@@ -259,7 +259,13 @@ KKSPhaseConcentrationMultiPhaseMaterial::computeQpProperties()
   _iter[_qp] = _nested_solve.getIterations();
 
   if (_nested_solve.getState() == NestedSolve::State::NOT_CONVERGED)
+  {
+    for (const auto m : make_range(_num_c * _num_j))
+      std::cout << (*_prop_ci[m])[_qp] << "\t";
+    std::cout << "\n";
     mooseException("Nested Newton iteration did not converge.");
+  }
+
 
   /// @{ assign solution to ci
   for (const auto m : make_range(_num_c * _num_j))
