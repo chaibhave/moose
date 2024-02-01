@@ -526,11 +526,11 @@ NestedSolveTempl<is_ad>::nonlinearDamped(V & guess, T && compute, C && computeCo
 
     r_square = normSquare(residual);
   }
-
+  // std::cout << "Num iters = " << _n_iterations << ", R_sq_0 = " << r0_square << ", R_sq = " << r_square << ", del_X = " << delta<<"\n";
   /// @{ if we exceed the max iterations, we could still be converged (considering the acceptable multiplier)
-  if (!isConverged(r0_square, r_square, /*acceptable=*/true))
+  if (!(isConverged(r0_square, r_square, /*acceptable=*/true) || isRelSmall(delta, guess, _delta_thresh) ) )
     {
-      std::cout << "Num iters = " << _n_iterations << ", R_sq_0 = " << r0_square << ", R_sq = " << r_square << ", del_X = " << delta<<"\n";
+      std::cout << "Num iters = " << _n_iterations << ", R_sq_0 = " << r0_square << ", R_sq = " << r_square << ", is Small del_X = " << isRelSmall(delta, guess, _delta_thresh) <<"\n";
       _state = State::NOT_CONVERGED;
     }
     
