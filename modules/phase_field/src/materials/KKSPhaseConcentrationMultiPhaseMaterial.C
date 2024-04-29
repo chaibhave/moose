@@ -170,7 +170,11 @@ KKSPhaseConcentrationMultiPhaseMaterial::computeQpProperties()
 
   /// @{ initialize first guess using the solution from previous step
   for (const auto m : make_range(_num_c * _num_j))
-    solution(m) = (*_ci_old[m])[_qp];
+    {
+      solution(m) = (*_ci_old[m])[_qp];
+      (*_prop_ci[m])[_qp] = (*_ci_old[m])[_qp];
+    }
+
   /// @}
 
   _nested_solve.setAbsoluteTolerance(_abs_tol);
@@ -185,7 +189,7 @@ KKSPhaseConcentrationMultiPhaseMaterial::computeQpProperties()
 
     for (const auto m : make_range(_num_j))
       _Fj_mat[m]->computePropertiesAtQp(_qp);
-
+    residual.setZero();
     /// @{ assign residual functions
     for (const auto m : make_range(_num_c))
     {
