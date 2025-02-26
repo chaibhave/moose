@@ -27,7 +27,7 @@ ADACStabilize::validParams()
 ADACStabilize::ADACStabilize(const InputParameters & parameters)
   : ADKernel(parameters),
     _v(adCoupledValue("v")),
-    _grad_v(coupledGradient("v")),
+    _grad_v(adCoupledGradient("v")),
     _thresh(getParam<Real>("thresh")),
     _prop_L(getADMaterialProperty<Real>("mob_name")),
     _del_kappa(getADMaterialProperty<Real>("del_kappa"))

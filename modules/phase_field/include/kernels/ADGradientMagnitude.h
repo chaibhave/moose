@@ -25,5 +25,5 @@ protected:
   const unsigned int _v_var;
 
   /// Gradient of the coupled variable
-  const VariableGradient & _grad_v;
+  const ADVariableGradient & _grad_v;
 };

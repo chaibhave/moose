@@ -24,13 +24,16 @@ ADGradientMagnitude::validParams()
 ADGradientMagnitude::ADGradientMagnitude(const InputParameters & parameters)
   : ADKernel(parameters),
     _v_var(coupled("v")),
-    _grad_v(coupledGradient("v"))
+    _grad_v(adCoupledGradient("v"))
 {
 }
 
 ADReal
 ADGradientMagnitude::computeQpResidual()
 {
-   auto _gradient_magnitude = std::sqrt(_grad_v[_qp]*_grad_v[_qp]);
-   return (_u[_qp] - _gradient_magnitude) * _test[_i][_qp];
+  auto _gradient_magnitude = std::sqrt(_grad_v[_qp]*_grad_v[_qp]);
+  if (_gradient_magnitude == 0.0)
+    return _u[_qp] * _test[_i][_qp];
+  else
+    return (_u[_qp] - _gradient_magnitude) * _test[_i][_qp];
 }

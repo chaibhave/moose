@@ -1,12 +1,12 @@
-l = ${units 100.0 m}
-V = -500
+l = ${units 200.0 m}
+V = -5000
 r0 = ${units 250.0 m}
 pi = 3.14159265359
 [Mesh]
     type = GeneratedMesh
     dim = 2
     nx = ${fparse 8 * 1000 / ${l} }
-    ny = ${fparse 78 * 1000 / ${l} }
+    ny = ${fparse 8 * 1000 / ${l} }
     xmin = 0
     xmax = 1000
     ymin = 0
@@ -143,6 +143,11 @@ pi = 3.14159265359
     pp_names = 'expected_radius radius'
     execute_on = 'INITIAL TIMESTEP_END'
   []
+  [walltime]
+    type = PerfGraphData
+    section_name = "Root"
+    data_type = total
+  []
 []
 [Preconditioning]
     [full]
@@ -150,22 +155,28 @@ pi = 3.14159265359
       full = true
     []
   []
-[Executioner]
+  [Executioner]
     type = Transient
     solve_type = NEWTON
     scheme = bdf2
-    # petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
-    # petsc_options_value = 'lu superlu_dist'
+    petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
+    petsc_options_value = 'lu superlu_dist'
     nl_max_its = 10
-    [TimeStepper]
-        type = IterationAdaptiveDT
-        dt = 1e-3
-        iteration_window = 2
-        optimal_iterations = 7
-        growth_factor = 1.25
-        cutback_factor = 0.8
-    []
-    end_time = ${fparse abs( 1.5*r0 / ${V} ) }
+    automatic_scaling = true
+    # dtmax = ${fparse abs ( ${l} / 8 / ${V} ) } #0.01
+    dt = 0.01
+    # [TimeStepper]
+    #     type = IterationAdaptiveDT
+    #     dt = 1e-5
+    #     iteration_window = 2
+    #     optimal_iterations = 7
+    #     growth_factor = 1.25
+    #     cutback_factor = 0.8
+    #   []
+    end_time = ${fparse abs( 1.5 * r0 / ${V} ) }
+[]
+[Debug]
+    show_var_residual_norms = true
 []
 
 [Outputs]
