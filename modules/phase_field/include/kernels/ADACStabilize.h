@@ -26,7 +26,7 @@ protected:
   const ADVariableValue & _v;
 
   /// Gradient of the coupled gradient magnitude variable
-  const VariableGradient & _grad_v;
+  const ADVariableGradient & _grad_v;
 
   /// Threshold
   const Real _thresh;

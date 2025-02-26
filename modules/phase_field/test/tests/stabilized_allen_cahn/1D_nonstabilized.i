@@ -1,10 +1,10 @@
 l = ${units 100.0 m}
-V = -5000
+V = -500
 r0 = ${units 250.0 m}
 pi = 3.14159265359
 [Mesh]
     type = GeneratedMesh
-    dim = 2
+    dim = 1
     nx = ${fparse 8 * 1000 / ${l} }
     ny = ${fparse 8 * 1000 / ${l} }
     xmin = 0
@@ -17,8 +17,6 @@ pi = 3.14159265359
 []
 [Variables]
     [eta]
-    []
-    [grad_eta]
     []
 []
 
@@ -37,32 +35,15 @@ pi = 3.14159265359
         variable = eta
         kappa_name = kappa_int
     []
-    [stabilize_moelans]
-        type = ADACStabilize
-        variable = eta
-        v = grad_eta
-        del_kappa_name = 'del_kappa'
-        save_in = 'stab_residual'
-        thresh = 1e-12
-    []
-    [grad_eta_magnitude]
-        type = ADGradientMagnitude
-        v = eta
-        variable = grad_eta
-    []
 []
 [AuxVariables]
     [stab_residual]
     []
+    [grad_eta]
+    []
 []
 
 [ICs]
-    # [eta_IC]
-    #     type = RandomIC
-    #     variable = eta
-    #     min = 0.0
-    #     max = 1.0
-    # []
     [eta_IC]
         type = FunctionIC
         function = eta_ic_func
@@ -113,7 +94,7 @@ pi = 3.14159265359
         material_property_names = 'sigma_int l f_chem(eta) mu:=D[f_chem,eta]'
         property_name = 'sigma_s'
         expression = 'max(sigma_int,abs(mu*l/2) )'
-        outputs = 'exodus'
+        #outputs = 'exodus'
     []
     [mu_s]
         type = ADDerivativeParsedMaterial
@@ -128,7 +109,6 @@ pi = 3.14159265359
         material_property_names = 'sigma_s sigma_int l'
         property_name = 'del_kappa'
         expression = '-3*(sigma_s-sigma_int)*l/4'
-        #outputs = 'exodus'
     []
     [h]
         type = ADDerivativeParsedMaterial
@@ -142,7 +122,6 @@ pi = 3.14159265359
         material_property_names = 'l h(eta)'
         property_name = f_chem
         expression = 'h*${V}/1.5/l'
-        #outputs = 'exodus'
     []
     [F]
         type = ADDerivativeParsedMaterial
@@ -177,11 +156,6 @@ pi = 3.14159265359
     pp_names = 'expected_radius radius'
     execute_on = 'INITIAL TIMESTEP_END'
   []
-  [walltime]
-    type = PerfGraphData
-    section_name = "Root"
-    data_type = total
-  []
 []
 [Preconditioning]
     [full]
@@ -189,15 +163,14 @@ pi = 3.14159265359
       full = true
     []
   []
-  [Executioner]
+[Executioner]
     type = Transient
     solve_type = NEWTON
     scheme = bdf2
-    petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
-    petsc_options_value = 'lu superlu_dist'
+    # petsc_options_iname = '-pc_type -pc_factor_mat_solver_package'
+    # petsc_options_value = 'lu superlu_dist'
     nl_max_its = 10
-    automatic_scaling = true
-    # dtmax = ${fparse abs ( ${l} / 8 / ${V} ) } #0.01
+    # line_search = none
     [TimeStepper]
         type = IterationAdaptiveDT
         dt = 1e-5
@@ -207,12 +180,13 @@ pi = 3.14159265359
         cutback_factor = 0.8
       []
     end_time = ${fparse abs( 1.5 * r0 / ${V} ) }
+    num_steps = 2
 []
 [Debug]
     show_var_residual_norms = true
 []
 
 [Outputs]
-    exodus = true
-    csv = true
+    # exodus = true
+    # csv = true
 []
