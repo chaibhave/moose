@@ -99,6 +99,11 @@ NEML2ActionCommon::commonParams()
       {},
       NEML2Utils::docstring("List of pairs of NEML2 variables to take derivatives (i.e., first in "
                             "the pair w.r.t. the second in the pair)."));
+  params.addParam<bool>(
+      "allow_higher_order_derivatives",
+      false,
+      NEML2Utils::docstring(
+          "Whether to allow the calculation of higher order derivatives on the outputs"));
 
   // Error checking, logging, etc
   params.addParam<std::vector<std::string>>(

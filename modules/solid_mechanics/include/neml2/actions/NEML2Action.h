@@ -118,6 +118,9 @@ protected:
   /// MOOSE-NEML2 derivative mappings
   std::vector<DerivativeMapping> _derivs;
 
+  /// Flag for higher order NEML2 derivatives
+  const bool _allow_higher_order_derivatives;
+
   /// MOOSE-NEML2 parameter derivative mappings
   std::vector<ParameterDerivativeMapping> _param_derivs;
 
