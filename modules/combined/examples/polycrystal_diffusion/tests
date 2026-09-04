@@ -1,0 +1,50 @@
+[Tests]
+  design = 'LowerDBlockFromSidesetGenerator.md MatDiffusion.md'
+  issues = ''
+
+  [zero_excess]
+    type = CSVDiff
+    input = polycrystal_diffusion.i
+    cli_args = 'D_gb=1e-19 Outputs/file_base=zero_gb Outputs/exodus=false'
+    csvdiff = zero_gb.csv
+    requirement = 'The mixed-dimensional polycrystal example shall recover homogeneous bulk diffusion when the grain-boundary excess conductance is zero.'
+  []
+
+  [enhanced_gb]
+    type = CSVDiff
+    input = polycrystal_diffusion.i
+    cli_args = 'Outputs/file_base=enhanced_gb Outputs/exodus=false'
+    csvdiff = enhanced_gb.csv
+    requirement = 'The mixed-dimensional polycrystal example shall add conservative tangential diffusion on one deduplicated lower-dimensional element per grain-boundary segment.'
+  []
+
+  [bicrystal_transient]
+    type = RunApp
+    input = bicrystal_whipple.i
+    cli_args = 'Outputs/file_base=bicrystal_whipple Outputs/active=csv'
+    requirement = 'The mixed-dimensional formulation shall evolve constant-source diffusion in a conforming two-grain mesh with one explicit lower-dimensional grain boundary.'
+  []
+
+  [bicrystal_whipple_comparison]
+    type = RunCommand
+    command = 'python scripts/compare_whipple.py --prefix bicrystal_whipple'
+    prereq = bicrystal_transient
+    required_python_packages = scipy
+    requirement = 'The bicrystal grain-boundary concentration history shall agree with Whipple constant-source profiles to a relative L2 tolerance of 0.2 percent.'
+  []
+
+  [polycrystal_transient]
+    type = CSVDiff
+    input = polycrystal_transient.i
+    cli_args = 'Executioner/end_time=1e8 Outputs/csv/time_step_interval=10 Outputs/active=csv Outputs/file_base=polycrystal_transient_test'
+    csvdiff = polycrystal_transient_test.csv
+    requirement = 'The 100-grain Neper microstructure shall support conservative transient constant-source diffusion using the shared bulk and grain-boundary concentration field.'
+  []
+
+  [polycrystal_3d_transient]
+    type = RunApp
+    input = polycrystal_3d.i
+    cli_args = 'Executioner/end_time=1e7 Outputs/file_base=polycrystal_3d_test Outputs/exodus=false'
+    requirement = 'A conforming three-dimensional Neper polycrystal shall evolve one concentration field on TET10 bulk and shared-node TRI6 grain-boundary elements.'
+  []
+[]

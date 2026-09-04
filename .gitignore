@@ -356,3 +356,6 @@ binaryoutput
 # large, machine-local artifact; only the checked-in config is tracked.
 .codegraph/
 !codegraph.json
+
+# Project-local Neper toolchain used by the polycrystal diffusion example
+.neper-env/

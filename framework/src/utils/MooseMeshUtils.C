@@ -29,6 +29,8 @@
 
 #include "timpi/parallel_sync.h"
 
+#include <algorithm>
+
 namespace MooseMeshUtils
 {
 
@@ -1028,7 +1030,8 @@ createSubdomainFromSidesets(MeshBase & mesh,
                             std::vector<BoundaryName> boundary_names,
                             const SubdomainID new_subdomain_id,
                             const SubdomainName new_subdomain_name,
-                            const std::string type_name)
+                            const std::string type_name,
+                            const bool deduplicate)
 {
   // Generate a new block id if one isn't supplied.
   SubdomainID new_block_id = new_subdomain_id;
@@ -1109,6 +1112,7 @@ createSubdomainFromSidesets(MeshBase & mesh,
   }
 
   std::vector<std::pair<dof_id_type, ElemSidePair>> element_sides_on_boundary;
+  std::set<std::vector<dof_id_type>> side_node_sets;
   dof_id_type counter = 0;
   for (const auto & [eid, side, bid] : side_list)
     if (sidesets.count(bid))
@@ -1121,9 +1125,16 @@ createSubdomainFromSidesets(MeshBase & mesh,
               "elements. Make sure that ",
               type_name,
               "s are run before any refinement generators");
-        element_sides_on_boundary.push_back(std::make_pair(counter, ElemSidePair(elem, side)));
+        auto side_elem = elem->side_ptr(side);
+        std::vector<dof_id_type> side_node_ids;
+        side_node_ids.reserve(side_elem->n_nodes());
+        for (const auto node : side_elem->node_index_range())
+          side_node_ids.push_back(side_elem->node_id(node));
+        std::sort(side_node_ids.begin(), side_node_ids.end());
+
+        if (!deduplicate || side_node_sets.insert(side_node_ids).second)
+          element_sides_on_boundary.push_back(std::make_pair(counter++, ElemSidePair(elem, side)));
       }
-      ++counter;
     }
 
   dof_id_type max_elem_id = mesh.max_elem_id();

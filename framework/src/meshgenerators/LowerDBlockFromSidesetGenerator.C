@@ -38,6 +38,11 @@ LowerDBlockFromSidesetGenerator::validParams()
                                  "The lower dimensional block name to create (optional)");
   params.addRequiredParam<std::vector<BoundaryName>>(
       "sidesets", "The sidesets from which to create the new block");
+  params.addParam<bool>(
+      "deduplicate",
+      false,
+      "Create only one lower-dimensional element when a conforming internal side is present in "
+      "the sideset for both neighboring elements");
 
   params.addClassDescription("Adds lower dimensional elements on the specified sidesets.");
 
@@ -68,7 +73,8 @@ LowerDBlockFromSidesetGenerator::generate()
                                                 isParamValid("new_block_name")
                                                     ? getParam<SubdomainName>("new_block_name")
                                                     : SubdomainName(),
-                                                type());
+                                                type(),
+                                                getParam<bool>("deduplicate"));
   }
   catch (MooseException & e)
   {

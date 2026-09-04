@@ -17,6 +17,11 @@ tool like Cubit, or using this MeshGenerator.
 In 3D simulations, the appropriate 2D elements (for 2D simulations, 1D elements)
 will be meshed in at selected side sets (boundaries).
 
+For a conforming internal interface, some mesh readers attach the same sideset
+ID to both neighboring element sides. Set [!param](/Mesh/LowerDBlockFromSidesetGenerator/deduplicate)
+to create one lower-dimensional element for each unique side-node set in that
+case.
+
 ## Coupling between side and volume meshes
 
 The newly-generated lower dimensional side elements will share nodes with the higher

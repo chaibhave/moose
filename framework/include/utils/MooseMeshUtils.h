@@ -521,12 +521,14 @@ std::set<dof_id_type> getBoundaryNodes(const MeshBase & mesh, const BoundaryID b
  * @param new_subdomain_name The name of the new subdomain to be created based on the sidesets
  * @param type_name The type of the mesh generator that is calling this method, used for error
  *                  messages and debugging purposes.
+ * @param deduplicate Whether sides with identical node sets should create only one element
  */
 void createSubdomainFromSidesets(MeshBase & mesh,
                                  std::vector<BoundaryName> boundary_names,
                                  const SubdomainID new_subdomain_id,
                                  const SubdomainName new_subdomain_name,
-                                 const std::string type_name);
+                                 const std::string type_name,
+                                 const bool deduplicate = false);
 
 /**
  * Convert a list of blocks in a given mesh to a standalone new mesh.

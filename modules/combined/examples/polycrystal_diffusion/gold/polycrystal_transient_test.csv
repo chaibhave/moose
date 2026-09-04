@@ -1,0 +1,3 @@
+time,assembled_storage_rate,average_c,bulk_inventory,conservation_error,right_outward_flux,source_influx
+0,0,0,0,0,0,0
+100000000,5.592290058138e-18,0.092973527426124,9.2973527426124e-10,-5.2092553135786e-30,1.7419417750266e-22,5.5924642523103e-18
