@@ -9,8 +9,9 @@ K_gb_excess = ${fparse gb_thickness * (D_gb - D_bulk)}
 mesh_coordinate_scale = ${units 1 mum -> m}
 
 [Mesh]
-  # Promote the complete mixed-dimensional mesh together to TET10/TRI6.
-  second_order = true
+  # First-order TET4/TRI3 bulk + TRI3/EDGE2 GB. The early-time undershoot is
+  # controlled via mass lumping on the storage kernel (see [Kernels]) instead
+  # of promoting the whole mesh to quadratic elements.
   [neper]
     type = FileMeshGenerator
     file = mesh/neper_polycrystal_3d.msh
@@ -34,7 +35,7 @@ mesh_coordinate_scale = ${units 1 mum -> m}
 [Variables]
   [c]
     family = LAGRANGE
-    order = SECOND
+    order = FIRST
     block = 'bulk grain_boundaries'
   []
 []
@@ -42,17 +43,17 @@ mesh_coordinate_scale = ${units 1 mum -> m}
 [AuxVariables]
   [bulk_diffusion_residual]
     family = LAGRANGE
-    order = SECOND
+    order = FIRST
     block = 'bulk grain_boundaries'
   []
   [gb_diffusion_residual]
     family = LAGRANGE
-    order = SECOND
+    order = FIRST
     block = 'bulk grain_boundaries'
   []
   [storage_residual]
     family = LAGRANGE
-    order = SECOND
+    order = FIRST
     block = 'bulk grain_boundaries'
   []
 []
@@ -74,7 +75,7 @@ mesh_coordinate_scale = ${units 1 mum -> m}
 
 [Kernels]
   [storage]
-    type = TimeDerivative
+    type = MassLumpedTimeDerivative
     variable = c
     block = bulk
     save_in = storage_residual

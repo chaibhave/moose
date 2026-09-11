@@ -1125,16 +1125,23 @@ createSubdomainFromSidesets(MeshBase & mesh,
               "elements. Make sure that ",
               type_name,
               "s are run before any refinement generators");
-        auto side_elem = elem->side_ptr(side);
         std::vector<dof_id_type> side_node_ids;
-        side_node_ids.reserve(side_elem->n_nodes());
-        for (const auto node : side_elem->node_index_range())
-          side_node_ids.push_back(side_elem->node_id(node));
-        std::sort(side_node_ids.begin(), side_node_ids.end());
+        if (deduplicate)
+          {
+            // Avoid allocating a temporary side Elem (elem->side_ptr()) just to read its
+            // node ids; nodes_on_side() returns the local node indices directly from the
+            // reference element's topology tables, with no heap allocation.
+            const auto local_side_nodes = elem->nodes_on_side(side);
+            side_node_ids.reserve(local_side_nodes.size());
+            for (const auto local_node : local_side_nodes)
+              side_node_ids.push_back(elem->node_id(local_node));
+            std::sort(side_node_ids.begin(), side_node_ids.end());
+          }
 
         if (!deduplicate || side_node_sets.insert(side_node_ids).second)
-          element_sides_on_boundary.push_back(std::make_pair(counter++, ElemSidePair(elem, side)));
+          element_sides_on_boundary.push_back(std::make_pair(counter, ElemSidePair(elem, side)));
       }
+    ++counter;
     }
 
   dof_id_type max_elem_id = mesh.max_elem_id();
